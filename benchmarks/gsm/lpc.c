@@ -197,7 +197,7 @@ Reflection_coefficients (longword * L_ACF /* 0...8        IN      */ ,
    */
   Reflection_coefficients_label4:for (n = 1; n <= 8; n++, r++)
     {
-    #pragma HLS LOOP_TRIPCOUNT min=1 max=8
+    //#pragma HLS LOOP_TRIPCOUNT min=1 max=8
 
       temp = P[1];
       temp = GSM_ABS (temp);
