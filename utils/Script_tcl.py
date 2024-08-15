@@ -7,7 +7,7 @@ def generateScript(cFile, prjFile, benchmark, sol = 'solution1'):
      subtituicoes = {
      'fun_top': prjFile,
      'arq_cpp': filesSeparatedBySpace, 
-     'benchmark': benchmark,
+     'benchmark_path': "DATASETS/"+benchmark,
      'solution': sol
      }
 

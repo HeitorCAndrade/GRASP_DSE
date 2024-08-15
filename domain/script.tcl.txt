@@ -4,7 +4,7 @@
 ## Please DO NOT edit it.
 ## Copyright (C) 1986-2020 Xilinx, Inc. All Rights Reserved.
 ############################################################
-open_project $benchmark
+open_project $benchmark_path
 set_top $fun_top
 add_files {$arq_cpp}
 open_solution $solution
