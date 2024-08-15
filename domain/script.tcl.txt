@@ -4,12 +4,13 @@
 ## Please DO NOT edit it.
 ## Copyright (C) 1986-2020 Xilinx, Inc. All Rights Reserved.
 ############################################################
-open_project Raise_dse
+open_project $benchmark
 set_top $fun_top
 add_files {$arq_cpp}
-open_solution "solution1"
-set_part {xcvu35p-fsvh2104-1-e}
+open_solution $solution
+set_part {xc7z020clg400-1}
 create_clock -period 8 -name default
 source "./domain/directives.tcl"
 csynth_design
+export_design -flow impl -format syn_dcp -rtl verilog
 exit

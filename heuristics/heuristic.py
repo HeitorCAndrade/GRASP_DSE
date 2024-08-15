@@ -18,7 +18,8 @@ class Heuristic(ABC):
         self.directivesTxt = Path(filesDict['dFile']).read_text()
         self.cFiles = filesDict['cFiles']
         self.prjFile = filesDict['prjFile']
-        generateScript(self.cFiles, self.prjFile)
+        self.benchName = filesDict['benchName']
+        generateScript(self.cFiles, self.prjFile, self.benchName)
 
         with open(filesDict['dFile']) as jsonFile:
             self.DSEconfig:dict =  json.load(jsonFile)
@@ -227,6 +228,27 @@ class Heuristic(ABC):
             return newPermutation
         else:
             return None
+        
+    def storeFinishedSolutions(self, dictTree):
+        """ store finished directive config solutions for future run"""
+        fileName = "./stored_directives"+self.benchName+".pkl"
+        filePath = Path(fileName)
+
+        with open(fileName, 'wb') as f:
+            pickle.dump(dictTree, f)
+
+
+    def getFinishedSolutions(self):
+        """ try to get finished directive config solutions from previous run"""
+        fileName = "./stored_directives"+self.benchName+".pkl"
+        filePath = Path(fileName)
+        if not filePath.is_file():
+            return None
+        
+        with open(fileName, "rb") as f:
+            dictTree = pickle.load(f)
+
+        return dictTree
 
     def getCachedSoltuion(self,solution:Solution):
         """

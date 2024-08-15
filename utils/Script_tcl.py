@@ -1,12 +1,14 @@
 from string import Template
 
-def generateScript(cFile, prjFile):
+def generateScript(cFile, prjFile, benchmark, sol = 'solution1'):
      filesSeparatedBySpace = ""
      for file in cFile:
           filesSeparatedBySpace = (filesSeparatedBySpace+ file + " ")
      subtituicoes = {
      'fun_top': prjFile,
      'arq_cpp': filesSeparatedBySpace, 
+     'benchmark': benchmark,
+     'solution': sol
      }
 
 

@@ -27,7 +27,9 @@ class RandomSearch(Heuristic):
     
     def __init__(self,filesDict,timeLimit=3600,solutionSaver:SolutionsSaver = None):
         super().__init__(filesDict)
+        self.sol_count = 1
         self.solutionSaver = solutionSaver
+        self.filesDict = filesDict
         self._SECONDS = timeLimit
         seed()
         self.run()
@@ -35,9 +37,17 @@ class RandomSearch(Heuristic):
         self._SECONDS = seconds
     def run(self):
         onePermutation = {}
+        checkPointInterval = self.filesDict['checkpoint_interval']
         inTime = True
         start = time.time()
         controlTree:dict = {}
+        if checkPointInterval > 0:
+            print(f'####################\ncheckpoint interval set: {checkPointInterval}\n#################### ')
+        temp = self.getFinishedSolutions()
+        if temp is not None:
+           controlTree = temp 
+        else: 
+            print('####################\ncheckpoint file not found\n#################### ')
         while inTime:
 
             onePermutation = self.generateRandomPermutation(controlTree)
@@ -54,6 +64,18 @@ class RandomSearch(Heuristic):
                     print (len(self.solutions))      
 
             end = time.time()
+            if checkPointInterval > 0 and self.sol_count % checkPointInterval == 0:
+                self.storeFinishedSolutions(controlTree)
+            if not onePermutation:
+                print('####################\nNo permutations left!\n#################### ')
+                break
+            if self.filesDict['maxInstances'] > 0 and (self.filesDict['maxInstances']) == self.sol_count:
+                print(f'####################\nReached maximum instance count: {self.sol_count}\n#################### ')
+                break
+
+            self.sol_count = self.sol_count + 1
+            new_sol = 'solution' + str(self.sol_count)
+            generateScript(self.filesDict['cFiles'], self.filesDict['prjFile'], self.filesDict['benchName'], new_sol)
             if self.solutionSaver:
                 self.solutionSaver.save(self.solutions,'./time_stamps/timeStampRandomSearch')
             if end - start >= self._SECONDS: 

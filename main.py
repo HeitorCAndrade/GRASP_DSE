@@ -38,6 +38,9 @@ if __name__ == "__main__":
     parser.add_argument("-t", "--timeLimit", help = "time limit for heuristic in seconds",required=True)
     parser.add_argument("-args", "--arguments", help = "arguments of heuristic",required=False, nargs='+')
 
+    parser.add_argument("-i", "--instances", help="maximum amount of design instances", required=False)
+    parser.add_argument("-ci", "--checkpoint_interval", help="number of interations between checkpoint save", required=False)
+
     filesDict = {}
     # Read arguments from command line
     args = parser.parse_args()
@@ -52,11 +55,21 @@ if __name__ == "__main__":
         filesDict['cFiles'] = benchmarks[args.benchmark]["cFiles"]
         filesDict['dFile'] = benchmarks[args.benchmark]["dFile"]
         filesDict['prjFile'] = benchmarks[args.benchmark]["prjFile"]
+        filesDict['benchName'] = args.benchmark
     filesDict['timeLimit'] = args.timeLimit
     filesDict['model'] = args.estimationModel
     filesDict['heuristic'] = args.heuristic    
     filesDict['saveFile'] = args.saveFile
     filesDict['arguments'] = args.arguments
+    if args.instances is not None:
+        filesDict['maxInstances'] = int(args.instances)
+    else:
+        filesDict['maxInstances'] = -1
+
+    if args.instances is not None:
+        filesDict['checkpoint_interval'] = int(args.checkpoint_interval)
+    else:
+        filesDict['checkpoint_interval'] = -1
     
     hour = 3600
     RESOURCE_TO_COMPARE = 'resources'
