@@ -283,7 +283,7 @@
                 "directive_type":"unroll"
             },
             "inline aes_main": {
-                "possible_directives":["","set_directive_inline -region \"aes_main\""],
+                "possible_directives":["","set_directive_inline \"aes_main\""],
                 "function":"aes_main",
                 "label": "",
                 "directive_type":"inline"
