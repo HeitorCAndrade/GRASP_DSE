@@ -34,7 +34,7 @@ if __name__ == "__main__":
     parser.add_argument("-p", "--prjFile", help = "Prj. top file",required=False)
 
     parser.add_argument("-o", "--saveFile", help = "name of save file",required=True)
-    parser.add_argument("-model", "--estimationModel", help = "model used in heuristics for estimation of synthesis",required=True)
+    parser.add_argument("-model", "--estimationModel", help = "model used in heuristics for estimation of synthesis",required=False)
     parser.add_argument("-t", "--timeLimit", help = "time limit for heuristic in seconds",required=True)
     parser.add_argument("-args", "--arguments", help = "arguments of heuristic",required=False, nargs='+')
 
@@ -57,7 +57,7 @@ if __name__ == "__main__":
         filesDict['prjFile'] = benchmarks[args.benchmark]["prjFile"]
         filesDict['benchName'] = args.benchmark
     filesDict['timeLimit'] = args.timeLimit
-    filesDict['model'] = args.estimationModel
+    filesDict['model'] = "./models/" + args.benchmark + "_MODEL"
     filesDict['heuristic'] = args.heuristic    
     filesDict['saveFile'] = args.saveFile
     filesDict['arguments'] = args.arguments
@@ -73,29 +73,15 @@ if __name__ == "__main__":
     
     hour = 3600
     RESOURCE_TO_COMPARE = 'resources'
-    modelPath = filesDict['model']
-    modelName = filesDict['model'].split('/')[-1] #get last element of split ./model/modelname -> modelname
     factory = RandomForestFactory(filesDict["dFile"])   
     model = RandomForestEstimator(filesDict['dFile'])
     timeTraining = 0.05*hour
     trainer = RandomSamplesEstimatorTrainer(filesDict,model,timeTraining)
-    try:
-        with open(modelPath, 'rb') as modelFile:
-            loadModel = pickle.load(modelFile)
-    except Exception as e:
-        trainer.trainUntilErrorThreshold(0.8,timeTraining/3)
-        with open(f'trainers/{modelName}_TRAINER', 'wb') as modelFile:
-            pickle.dump(trainer,modelFile)
-        with open(f'{modelPath}', 'wb') as modelFile:
-            pickle.dump(trainer.estimator,modelFile)
-    with open(modelPath, 'rb') as modelFile:
-        model = pickle.load(modelFile)
-    
+
     times_dict = {"./models/SHA_MODEL": 5*hour, "./models/GSM_MODEL": 1.25*hour, "./models/AES_MODEL":40*hour,
                   "./models/DIGIT_MODEL":20*hour,"./models/OPTICAL_MODEL":30*hour,"./models/SPAM_MODEL":10*hour,
                   "./models/MOTION_MODEL":5*hour,"./models/ADPCM_MODEL":5*hour}
-    if modelPath not in times_dict:
-        times_dict[modelPath] = timeTraining
+    
     GENETIC_HEURISTIC = 'genetic'
     GRASP_HEURISTIC = 'GRASP'
     RANDOM_SEARCH_HEURISTIC = 'random'
