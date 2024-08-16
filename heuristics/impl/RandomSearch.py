@@ -37,12 +37,9 @@ class RandomSearch(Heuristic):
         self._SECONDS = seconds
     def run(self):
         onePermutation = {}
-        checkPointInterval = self.filesDict['checkpoint_interval']
         inTime = True
         start = time.time()
         controlTree:dict = {}
-        if checkPointInterval > 0:
-            print(f'####################\ncheckpoint interval set: {checkPointInterval}\n#################### ')
         temp = self.getFinishedSolutions()
         if temp is not None:
            controlTree = temp 
@@ -64,8 +61,6 @@ class RandomSearch(Heuristic):
                     print (len(self.solutions))      
 
             end = time.time()
-            if checkPointInterval > 0 and self.sol_count % checkPointInterval == 0:
-                self.storeFinishedSolutions(controlTree)
             if not onePermutation:
                 print('####################\nNo permutations left!\n#################### ')
                 break
@@ -79,6 +74,7 @@ class RandomSearch(Heuristic):
             if self.solutionSaver:
                 self.solutionSaver.save(self.solutions,'./time_stamps/timeStampRandomSearch')
             if end - start >= self._SECONDS: 
+                print('####################\nTime reached\n#################### ')
                 break                
                         
 
