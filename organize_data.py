@@ -30,7 +30,42 @@ def extract_power_report(project_path, solution):
     return [total_power, dynamic_power, static_power]
 
 def extract_timing_summary(project_path, solution):
-    pass
+    numeric_const_pattern = '[-+]? (?: (?: \d* \. \d+ ) | (?: \d+ \.? ) )(?: [Ee] [+-]? \d+ ) ?'
+    rx = re.compile(numeric_const_pattern, re.VERBOSE)
+    full_path = project_path + solution + "impl/verilog/project.runs/impl_1/"
+    report_name = "bd_0_wrapper_timing_summary_routed.rpt"
+
+    timing_ar = []
+    for _ in range(6):
+        timing_ar.append(np.NAN)
+
+    if not Path(full_path+report_name).is_file():
+        return [-1, -1, -1, -1]
+    
+    with open(full_path+report_name, "r") as rpt:
+        lines = rpt.readlines()
+
+    line_count = 0
+    for line in lines:
+        if line.find('Design Timing Summary') != -1:
+            start_line_count = True
+            
+        if start_line_count:
+            line_count += 1
+
+        if line_count == 10:
+            str_list = rx.findall(line)
+            timing_ar[0] = float(str_list[0]) # vivado_WNS
+            timing_ar[1] = float(str_list[1]) # vivado_TNS
+            timing_ar[2] = float(str_list[4]) # vivado_WHS
+            timing_ar[3] = float(str_list[5]) # vivado_THS
+            timing_ar[4] = float(str_list[8]) # vivado_WPWS
+            timing_ar[5] = float(str_list[9]) # vivado_TPWS
+
+    #TODO: find and return worst slack path
+
+    return timing_ar
+
 
 def extract_utilization(project_path, solution):
     pass
