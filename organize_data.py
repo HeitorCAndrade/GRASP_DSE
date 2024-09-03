@@ -68,7 +68,8 @@ def extract_timing_summary(project_path, solution):
 
 
 def extract_utilization(project_path, solution):
-    pass
+    full_path = project_path + solution + "impl/verilog/project.runs/impl_1/"
+    report_name = "bd_0_wrapper_utilization_placed.rpt"
 
 
 def organize_data(dataset_path, writing_path, instance="None"):
