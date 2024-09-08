@@ -35,7 +35,7 @@ if __name__ == "__main__":
 
     parser.add_argument("-o", "--saveFile", help = "name of save file",required=True)
     parser.add_argument("-model", "--estimationModel", help = "model used in heuristics for estimation of synthesis",required=False)
-    parser.add_argument("-t", "--timeLimit", help = "time limit for heuristic in seconds",required=True)
+    #parser.add_argument("-t", "--timeLimit", help = "time limit for heuristic in seconds",required=True)
     parser.add_argument("-args", "--arguments", help = "arguments of heuristic",required=False, nargs='+')
 
     parser.add_argument("-i", "--instances", help="maximum amount of design instances", required=False)
@@ -56,7 +56,7 @@ if __name__ == "__main__":
         filesDict['dFile'] = benchmarks[args.benchmark]["dFile"]
         filesDict['prjFile'] = benchmarks[args.benchmark]["prjFile"]
         filesDict['benchName'] = args.benchmark
-    filesDict['timeLimit'] = args.timeLimit
+    filesDict['timeLimit'] = -1 #args.timeLimit
     filesDict['model'] = "./models/" + args.benchmark + "_MODEL"
     filesDict['heuristic'] = args.heuristic    
     filesDict['saveFile'] = args.saveFile
@@ -94,8 +94,8 @@ if __name__ == "__main__":
         solutionsSaver = TimeLapsedSolutionsSaver(int(filesDict['timeLimit'])/10)
         heuristic1 = GRASP(filesDict,model,timeLimit=(int(filesDict['timeLimit'])+10),trainTime=1*hour,solutionSaver=solutionsSaver,timeSpentTraining=times_dict[filesDict['model']])   
     elif (RANDOM_SEARCH_HEURISTIC == filesDict['heuristic']):
-        solutionsSaver = TimeLapsedSolutionsSaver(int(filesDict['timeLimit'])/10)
-        heuristic1 = RandomSearch(filesDict,timeLimit=(int(filesDict['timeLimit'])+10),solutionSaver=solutionsSaver) 
+        #solutionsSaver = TimeLapsedSolutionsSaver(int(filesDict['timeLimit'])/10)
+        heuristic1 = RandomSearch(filesDict,timeLimit=-1) 
     elif (ANT_COLONY_HEURISTIC == filesDict['heuristic']):
         solutionsSaver = TimeLapsedSolutionsSaver(int(filesDict['timeLimit'])/10)
         heuristic1 = AntColony(filesDict,model,12,0.9,alpha=1,beta=1,timeLimit=(int(filesDict['timeLimit'])+10),trainTime=1*hour,solutionSaver=solutionsSaver) 

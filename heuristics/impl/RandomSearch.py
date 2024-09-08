@@ -51,8 +51,8 @@ class RandomSearch(Heuristic):
             if onePermutation:    #se tiver uma permutacao na variavel
                 solution = Solution(onePermutation)         #Solutions a partir deste
                 try:
-                    synthesisTimeLimit = self._SECONDS - (time.time() - start) 
-                    self.synthesisWrapper(solution,synthesisTimeLimit,self.solutionSaver)
+                    #synthesisTimeLimit = self._SECONDS - (time.time() - start) 
+                    self.synthesisWrapper(solution,self.solutionSaver)
                 except Exception as e:
                     print(e)
                 #executa else qnd try roda sem erros
@@ -72,10 +72,7 @@ class RandomSearch(Heuristic):
             new_sol = 'solution' + str(self.sol_count)
             generateScript(self.filesDict['cFiles'], self.filesDict['prjFile'], self.filesDict['benchName'], new_sol)
             if self.solutionSaver:
-                self.solutionSaver.save(self.solutions,'./time_stamps/timeStampRandomSearch')
-            if end - start >= self._SECONDS: 
-                print('####################\nTime reached\n#################### ')
-                break                
+                self.solutionSaver.save(self.solutions,'./time_stamps/timeStampRandomSearch')              
                         
 
 
