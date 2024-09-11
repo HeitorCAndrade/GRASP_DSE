@@ -200,9 +200,9 @@
         },
         "array_partition fft1D_512 reversed":{
             "possible_directives":["", 
-                "set_directive_array_partition -type complete -dim 0",
-                "set_directive_array_partition -type block -factor 2 -dim 0",
-                "set_directive_array_partition -type cyclic -factor 2 -dim 0"],
+                "set_directive_array_partition -type complete -dim 0 \"fft1D_512\" reversed",
+                "set_directive_array_partition -type block -factor 2 -dim 0 \"fft1D_512\" reversed",
+                "set_directive_array_partition -type cyclic -factor 2 -dim 0 \"fft1D_512\" reversed"],
             "function":"fft1D_512",
             "label":"",
             "variable": "reversed",
