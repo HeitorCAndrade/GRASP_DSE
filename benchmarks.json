@@ -7,6 +7,8 @@
     "OPTICAL": {"cFiles":["./benchmarks/optical-flow/src/sw/optical_flow_sw.cpp"] ,"dFile": "./directives_files/optical_flow.json" ,"prjFile": "optical_flow_sw"},
     "ADPCM": {"cFiles":["./benchmarks/adpcm/adpcm.c"] ,"dFile": "./directives_files/adpcm.json" ,"prjFile": "adpcm_main"},
     "MOTION": {"cFiles":["./benchmarks/motion/getvlc.c","./benchmarks/motion/getbits.c","./benchmarks/motion/motion.c","./benchmarks/motion/mpeg2.c"],"dFile":"./directives_files/motion.json","prjFile":"main"},
-    "TRANS_FFT": {"cFiles":["./benchmarks/transposed_fft/transposed_fft.c"], "dFile":"./directives_files/transposed_fft.json", "prjFile":"fft1D_512"}
+    "TRANS_FFT": {"cFiles":["./benchmarks/transposed_fft/transposed_fft.c"], "dFile":"./directives_files/transposed_fft.json", "prjFile":"fft1D_512"},
+    "GEMM": {"cFiles":["./benchmarks/gemm/gemm.c"], "dFile":"./directives_files/gemm.json", "prjFile":"bbgemm"},
+    "KNN": {"cFiles":["./benchmarks/knn/md.c"], "dFile":"./directives_files/knn.json", "prjFile":"md_kernel"}
 }
 
