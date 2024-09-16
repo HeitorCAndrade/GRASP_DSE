@@ -67,8 +67,10 @@ class RandomSearch(Heuristic):
             if self.filesDict['maxInstances'] > 0 and (self.filesDict['maxInstances']) == self.sol_count:
                 print(f'####################\nReached maximum instance count: {self.sol_count}\n#################### ')
                 break
-
-            self.sol_count = self.sol_count + 1
+            if Path(f'./DATASETS/{self.filesDict['benchName']}/{new_sol}/impl/verilog/project.runs/impl_1/runme.log').is_file():
+                self.sol_count = self.sol_count + 1
+            else:
+                print(f'####################\n{self.sol_count} failed!\n#################### ')
             new_sol = 'solution' + str(self.sol_count)
             generateScript(self.filesDict['cFiles'], self.filesDict['prjFile'], self.filesDict['benchName'], new_sol)
             if self.solutionSaver:
