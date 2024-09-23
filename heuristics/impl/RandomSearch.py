@@ -28,50 +28,69 @@ class RandomSearch(Heuristic):
     def __init__(self,filesDict,timeLimit=3600,solutionSaver:SolutionsSaver = None):
         super().__init__(filesDict)
         self.sol_count = 1
+        self.successful_inst_count = 0
         self.solutionSaver = solutionSaver
         self.filesDict = filesDict
+        self.synthesisTimeLimit = int(filesDict['timeLimit'])
         self._SECONDS = timeLimit
         seed()
         self.run()
     def setTimeLimit(self,seconds):
         self._SECONDS = seconds
     def run(self):
-        onePermutation = {}
-        inTime = True
+        #inTime = True
+        new_sol = 'solution1'
         benchName = self.filesDict['benchName']
-        start = time.time()
+        #start = time.time()
         controlTree:dict = {}
-        temp = self.getFinishedSolutions()
-        if temp is not None:
-           controlTree = temp 
-        else: 
-            print('####################\ncheckpoint file not found\n#################### ')
-        while inTime:
+        if self.filesDict['resume']:
+            if Path(f'./DATASETS/{benchName}/stored_permutations.json').is_file():
+                print('Found permutation file!')
+                controlTree = self.getStoredPermutations()
+            else:
+                print('WARNING: recursive flag set to True but no permutation file was found!')
+        
+        print(controlTree)
+        print('########################################################')
+        while True:
 
             onePermutation = self.generateRandomPermutation(controlTree)
+            print(onePermutation)
+            print('########################################################')
+            print(f'type: {type(controlTree)}')
+            print(controlTree)
+            print('########################################################')
             if onePermutation:    #se tiver uma permutacao na variavel
                 solution = Solution(onePermutation)         #Solutions a partir deste
                 try:
                     #synthesisTimeLimit = self._SECONDS - (time.time() - start) 
-                    self.synthesisWrapper(solution,self.solutionSaver)
+                    self.synthesisWrapper(solution, self.synthesisTimeLimit, self.solutionSaver)
+                    print(f'executing {new_sol}...')
                 except Exception as e:
                     print(e)
                 #executa else qnd try roda sem erros
                 else:   
-                    print(solution.results) 
-                    print (len(self.solutions))      
+                    #print(solution.results) 
+                    #print (len(self.solutions))   
+                    #self.storePermutations(controlTree)
+                    print(f'done instance {new_sol}!')   
 
             end = time.time()
             if not onePermutation:
                 print('####################\nNo permutations left!\n#################### ')
                 break
-            if self.filesDict['maxInstances'] > 0 and (self.filesDict['maxInstances']) == self.sol_count:
-                print(f'####################\nReached maximum instance count: {self.sol_count}\n#################### ')
-                break
             if Path(f'./DATASETS/{benchName}/{new_sol}/impl/verilog/project.runs/impl_1/runme.log').is_file():
-                self.sol_count = self.sol_count + 1
+                self.storePermutations(controlTree)
+                self.successful_inst_count = self.successful_inst_count + 1
+                pass
             else:
                 print(f'####################\n{self.sol_count} failed!\n#################### ')
+            if self.filesDict['maxInstances'] > 0 and (self.filesDict['maxInstances']) == self.successful_inst_count:
+                print(f'####################\nReached maximum instance count: {self.sol_count}\n#################### ')
+                print(self.successful_inst_count)
+                print(self.filesDict['maxInstances'])
+                break
+            self.sol_count = self.sol_count + 1
             new_sol = 'solution' + str(self.sol_count)
             generateScript(self.filesDict['cFiles'], self.filesDict['prjFile'], self.filesDict['benchName'], new_sol)
             if self.solutionSaver:

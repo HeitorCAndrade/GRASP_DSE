@@ -13,7 +13,7 @@ class Vitis(DesignTool):
  
     
     
-    def __init__(self, maxRAMUsage = 50, directivesFilename = './domain/directives.tcl'):
+    def __init__(self, maxRAMUsage = 70, directivesFilename = './domain/directives.tcl'):
         self._MAX_RAM_USAGE = maxRAMUsage #in percentage
         self._DIRECTIVES_FILENAME = directivesFilename
         self._PROCESSNAME = 'vitis_hls'
@@ -51,11 +51,11 @@ class Vitis(DesignTool):
         subprocess.Popen([self._SCRIPT_PATH])
         self.__monitorVitisProcess(timeLimit, solutionSaver)
 
-        xml='./Raise_dse/solution1/syn/report/csynth.xml'
-        results = self.__getResultsFromSynthesis(xml)
-        for key in results:
-            solution.setOneResult(key, results[key])
-        print (results)
+        # xml='./Raise_dse/solution1/syn/report/csynth.xml'
+        # results = self.__getResultsFromSynthesis(xml)
+        # for key in results:
+        #     solution.setOneResult(key, results[key])
+        # print (results)
         return solution
 
     def __writeDirectivesIntoFile(self,directives):
@@ -76,6 +76,7 @@ class Vitis(DesignTool):
                 print(error)
             for proc in psutil.process_iter(['name']):
                 if proc.name() == self._PROCESSNAME:
+                    print(f'Killed process {proc.name()}!')
                     proc.kill()
                     break        
 

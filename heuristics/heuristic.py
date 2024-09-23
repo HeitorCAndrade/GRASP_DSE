@@ -229,24 +229,33 @@ class Heuristic(ABC):
         else:
             return None
         
-    def storeFinishedSolutions(self, dictTree):
+    def storePermutations(self, dictTree):
         """ store finished directive config solutions for future run"""
-        fileName = "./stored_directives"+self.benchName+".pkl"
-        filePath = Path(fileName)
+        fileName = "./DATASETS/"+self.benchName+"/stored_permutations.json"
 
-        with open(fileName, 'wb') as f:
-            pickle.dump(dictTree, f)
+        with open(fileName, 'w') as f:
+            json.dump(dictTree, f)
 
 
-    def getFinishedSolutions(self):
+    def _decodeJSON(self, obj):
+        if isinstance(obj, str):
+            return int(obj)
+        elif isinstance(obj, dict):
+            return {self._decodeJSON(k): self._decodeJSON(v) for k, v in obj.items()}
+        else:
+            return obj
+
+    def getStoredPermutations(self):
         """ try to get finished directive config solutions from previous run"""
-        fileName = "./stored_directives"+self.benchName+".pkl"
+        fileName = "./DATASETS/"+self.benchName+"/stored_permutations.json"
         filePath = Path(fileName)
         if not filePath.is_file():
             return None
         
-        with open(fileName, "rb") as f:
-            dictTree = pickle.load(f)
+        with open(fileName, "r") as f:
+            dictTree = json.load(f)
+
+        dictTree = self._decodeJSON(dictTree)
 
         return dictTree
 
