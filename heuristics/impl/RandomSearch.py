@@ -50,16 +50,16 @@ class RandomSearch(Heuristic):
             else:
                 print('WARNING: recursive flag set to True but no permutation file was found!')
         
-        print(controlTree)
-        print('########################################################')
+        #print(controlTree)
+        #print('########################################################')
         while True:
 
             onePermutation = self.generateRandomPermutation(controlTree)
-            print(onePermutation)
-            print('########################################################')
-            print(f'type: {type(controlTree)}')
-            print(controlTree)
-            print('########################################################')
+            #print(onePermutation)
+            #print('########################################################')
+            #print(f'type: {type(controlTree)}')
+            #print(controlTree)
+            #print('########################################################')
             if onePermutation:    #se tiver uma permutacao na variavel
                 solution = Solution(onePermutation)         #Solutions a partir deste
                 try:
