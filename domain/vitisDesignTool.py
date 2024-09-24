@@ -1,5 +1,6 @@
 from random import randrange
 from domain.desingTool import DesignTool
+from domain.vivadoDesignTool import Vivado
 from domain.solution import Solution
 import xml.etree.ElementTree as ET
 import os.path
@@ -17,6 +18,7 @@ class Vitis(DesignTool):
         self._MAX_RAM_USAGE = maxRAMUsage #in percentage
         self._DIRECTIVES_FILENAME = directivesFilename
         self._PROCESSNAME = 'vitis_hls'
+        self._VIVADO_PROC_NAME = 'vivado'
         self._SCRIPT_PATH = './domain/callVitis.sh'
         self._FF_VALUE = 1; self._LUT_VALUE = 2; self._DSP_VALUE = 345.68; self._BRAM_VALUE = 547.33
         if sys.platform == 'win32':
@@ -40,6 +42,7 @@ class Vitis(DesignTool):
     
     def runSynthesis(self, solution: Solution, timeLimit = None, solutionSaver= None):
         self.__killOnGoingVitisProcessIfAny()    
+        self.__killOnGoingVivadoProcessIfAny() 
         #if not especified, there is infinite time to run synthesis
         if timeLimit is None:
             timeLimit = float('inf')
@@ -50,6 +53,7 @@ class Vitis(DesignTool):
         #vitis call using subprocess
         subprocess.Popen([self._SCRIPT_PATH])
         self.__monitorVitisProcess(timeLimit, solutionSaver)
+        self.__monitorVivadoProcess(timeLimit, solutionSaver)
 
         # xml='./Raise_dse/solution1/syn/report/csynth.xml'
         # results = self.__getResultsFromSynthesis(xml)
@@ -80,6 +84,20 @@ class Vitis(DesignTool):
                     proc.kill()
                     break        
 
+    def __killOnGoingVivadoProcessIfAny(self):
+        mydir='./Raise_dse'
+        while os.path.exists(mydir):
+            time.sleep(3)
+            try:
+                shutil.rmtree(mydir)
+            except Exception as error:
+                print(error)
+            for proc in psutil.process_iter(['name']):
+                if proc.name() == self._VIVADO_PROC_NAME:
+                    print(f'Killed process {proc.name()}!')
+                    proc.kill()
+                    break 
+
     def __monitorVitisProcess(self, timeLimit, solutionSaver):
         #testing if the synthesis ended
         vitisIsRunning = True   
@@ -104,6 +122,34 @@ class Vitis(DesignTool):
                     if time.time()-start >= timeLimit:
                         proc.kill()   
                         raise TimeExceededException(f"****{self._PROCESSNAME} has exceed max time usage****")
+                    if solutionSaver:
+                        solutionSaver.save(None,'./time_stamps/timeStampFiller')
+                    break
+
+    def __monitorVivadoProcess(self, timeLimit, solutionSaver):
+        #testing if the synthesis ended
+        vivadoIsRunning = True   
+        start = time.time()
+        while vivadoIsRunning:
+            #time between checking if the process is still running
+            time.sleep(3)
+            vivadoIsRunning = False
+            for proc in psutil.process_iter(['name']):
+                if proc.name() == self._VIVADO_PROC_NAME:
+                    vivadoIsRunning = True
+                    #check memory usage
+                    try:
+                        memoryUse = proc.memory_percent()
+                    except Exception as e:
+                        print(e)
+                        break
+                    if memoryUse > self._MAX_RAM_USAGE:
+                        proc.kill()   
+                        raise Exception(f"****{self._VIVADO_PROC_NAME} has exceed max RAM usage****")
+                    #check time usage 
+                    if time.time()-start >= timeLimit:
+                        proc.kill()   
+                        raise TimeExceededException(f"****{self._VIVADO_PROC_NAME} has exceed max time usage****")
                     if solutionSaver:
                         solutionSaver.save(None,'./time_stamps/timeStampFiller')
                     break
