@@ -12,7 +12,9 @@
 #E vai indo, os numeros representam qual diretiva foi usada das possiveis diretivas daquele tipo. "0" representa None (sem aquela diretiva)
 #---------------------------------------------------------------------------------------------------------------------------------------
 import json
+import os
 import time
+import psutil
 from heuristics.heuristic import Heuristic
 from pathlib import Path
 from domain.solution import Solution
@@ -37,6 +39,7 @@ class RandomSearch(Heuristic):
         self.run()
     def setTimeLimit(self,seconds):
         self._SECONDS = seconds
+
     def run(self):
         #inTime = True
         new_sol = 'solution1'
@@ -46,14 +49,19 @@ class RandomSearch(Heuristic):
         if self.filesDict['resume']:
             if Path(f'./DATASETS/{benchName}/stored_permutations.json').is_file():
                 print('Found permutation file!')
-                controlTree = self.getStoredPermutations()
+                self.successful_inst_count, controlTree = self.getStoredPermutations()
+                if self.successful_inst_count == -1:
+                    self.successful_inst_count = 9  #value to be changed for runs prior to the count store implementation
+                
+                self.sol_count = self.successful_inst_count+1
+                new_sol = 'solution' + str(self.sol_count)
+                generateScript(self.filesDict['cFiles'], self.filesDict['prjFile'], self.filesDict['benchName'], new_sol)
             else:
                 print('WARNING: recursive flag set to True but no permutation file was found!')
         
         #print(controlTree)
         #print('########################################################')
         while True:
-
             onePermutation = self.generateRandomPermutation(controlTree)
             #print(onePermutation)
             #print('########################################################')
@@ -80,9 +88,8 @@ class RandomSearch(Heuristic):
                 print('####################\nNo permutations left!\n#################### ')
                 break
             if Path(f'./DATASETS/{benchName}/{new_sol}/impl/verilog/project.runs/impl_1/runme.log').is_file():
-                self.storePermutations(controlTree)
                 self.successful_inst_count = self.successful_inst_count + 1
-                pass
+                self.storePermutations(controlTree, self.successful_inst_count)
             else:
                 print(f'####################\n{self.sol_count} failed!\n#################### ')
             if self.filesDict['maxInstances'] > 0 and (self.filesDict['maxInstances']) == self.successful_inst_count:

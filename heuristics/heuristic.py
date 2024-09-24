@@ -229,10 +229,11 @@ class Heuristic(ABC):
         else:
             return None
         
-    def storePermutations(self, dictTree):
+    def storePermutations(self, dictTree, good_runs_count):
         """ store finished directive config solutions for future run"""
-        fileName = "./DATASETS/"+self.benchName+"/stored_permutations.json"
 
+        dictTree['good_run_count'] = str(good_runs_count)
+        fileName = "./DATASETS/"+self.benchName+"/stored_permutations.json"
         with open(fileName, 'w') as f:
             json.dump(dictTree, f)
 
@@ -250,14 +251,15 @@ class Heuristic(ABC):
         fileName = "./DATASETS/"+self.benchName+"/stored_permutations.json"
         filePath = Path(fileName)
         if not filePath.is_file():
-            return None
+            return None, -1
         
         with open(fileName, "r") as f:
             dictTree = json.load(f)
 
+        good_runs_count = dictTree.pop('good_run_count', -1)
         dictTree = self._decodeJSON(dictTree)
 
-        return dictTree
+        return int(good_runs_count), dictTree
 
     def getCachedSoltuion(self,solution:Solution):
         """
