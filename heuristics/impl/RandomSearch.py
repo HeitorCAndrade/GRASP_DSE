@@ -54,6 +54,7 @@ class RandomSearch(Heuristic):
                     self.successful_inst_count = 9  #value to be changed for runs prior to the count store implementation
                 
                 self.sol_count = self.successful_inst_count+1
+                print(self.successful_inst_count)
                 new_sol = 'solution' + str(self.sol_count)
                 generateScript(self.filesDict['cFiles'], self.filesDict['prjFile'], self.filesDict['benchName'], new_sol)
             else:
@@ -72,7 +73,7 @@ class RandomSearch(Heuristic):
                 solution = Solution(onePermutation)         #Solutions a partir deste
                 try:
                     #synthesisTimeLimit = self._SECONDS - (time.time() - start) 
-                    self.synthesisWrapper(solution, self.synthesisTimeLimit, self.solutionSaver)
+                    self.synthesisWrapper(solution, self.synthesisTimeLimit, self.solutionSaver, self.sol_count)
                     print(f'executing {new_sol}...')
                 except Exception as e:
                     print(e)

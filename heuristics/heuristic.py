@@ -276,13 +276,13 @@ class Heuristic(ABC):
         self.solutions.append(deep)               
 
 
-    def synthesisWrapper(self,solution:Solution, timeLimit=None, solutionSaver= None, designToolChoice = "vitis"):
+    def synthesisWrapper(self,solution:Solution, timeLimit=None, solutionSaver= None, sol_count = 1, designToolChoice = "vitis"):
         """
         Calls synthesis and, if its successful, it saves solution in self.solutions.
         """
         designTool = DesignToolFactory.getDesignTool(designToolChoice)
         try:
-            designTool.runSynthesis(solution,timeLimit,solutionSaver)
+            designTool.runSynthesis(solution,timeLimit,solutionSaver, sol_count)
         except Exception as e:
             raise
         else:

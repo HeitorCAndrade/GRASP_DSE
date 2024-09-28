@@ -40,7 +40,7 @@ class Vitis(DesignTool):
         solution.setresults(results)
         return solution
     
-    def runSynthesis(self, solution: Solution, timeLimit = None, solutionSaver= None):
+    def runSynthesis(self, solution: Solution, timeLimit = None, solutionSaver= None, sol_count = 1):
         self.__killOnGoingVitisProcessIfAny()    
         self.__killOnGoingVivadoProcessIfAny() 
         #if not especified, there is infinite time to run synthesis
@@ -49,11 +49,28 @@ class Vitis(DesignTool):
         if timeLimit<=0:
             raise Exception(f"****{self._PROCESSNAME} has exceed max time usage****")
         self.__writeDirectivesIntoFile(solution.directives)
-        print('Running Synthesis...')
         #vitis call using subprocess
-        subprocess.Popen([self._SCRIPT_PATH])
-        self.__monitorVitisProcess(timeLimit, solutionSaver)
-        self.__monitorVivadoProcess(timeLimit, solutionSaver)
+        print('########################################################')
+        print(f'starting run {sol_count}!')
+        print('########################################################')
+        p = subprocess.Popen([self._SCRIPT_PATH])
+        start = time.time()
+        parent_pid = p.pid
+        parent_process = psutil.Process(parent_pid)
+        while parent_process.is_running():
+            time.sleep(3)
+            if time.time() - start > timeLimit:
+                print('########################################################')
+                print(f'run {sol_count} exceeded time limit! Killing processes...')
+                print('########################################################')
+                for p in parent_process.children(recursive=True):
+                    p.kill()
+                parent_process.kill()
+                print('finished killing processes')
+                break
+
+        #self.__monitorVitisProcess(timeLimit, solutionSaver)
+        #self.__monitorVivadoProcess(timeLimit, solutionSaver)
 
         # xml='./Raise_dse/solution1/syn/report/csynth.xml'
         # results = self.__getResultsFromSynthesis(xml)
