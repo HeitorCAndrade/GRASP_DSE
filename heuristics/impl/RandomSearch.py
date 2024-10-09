@@ -41,6 +41,7 @@ class RandomSearch(Heuristic):
         self._SECONDS = seconds
 
     def run(self):
+        was_successfull = False
         #inTime = True
         new_sol = 'solution1'
         benchName = self.filesDict['benchName']
@@ -73,8 +74,9 @@ class RandomSearch(Heuristic):
                 solution = Solution(onePermutation)         #Solutions a partir deste
                 try:
                     #synthesisTimeLimit = self._SECONDS - (time.time() - start) 
-                    self.synthesisWrapper(solution, self.synthesisTimeLimit, self.solutionSaver, self.sol_count)
                     print(f'executing {new_sol}...')
+                    was_successfull = self.synthesisWrapper(solution, self.synthesisTimeLimit, self.solutionSaver, self.sol_count)
+                    
                 except Exception as e:
                     print(e)
                 #executa else qnd try roda sem erros
@@ -88,11 +90,13 @@ class RandomSearch(Heuristic):
             if not onePermutation:
                 print('####################\nNo permutations left!\n#################### ')
                 break
-            if Path(f'./DATASETS/{benchName}/{new_sol}/impl/verilog/project.runs/impl_1/runme.log').is_file():
+            #if Path(f'./DATASETS/{benchName}/{new_sol}/impl/verilog/project.runs/impl_1/runme.log').is_file():
+            if was_successfull:
                 self.successful_inst_count = self.successful_inst_count + 1
                 self.storePermutations(controlTree, self.successful_inst_count)
             else:
                 print(f'####################\n{self.sol_count} failed!\n#################### ')
+            was_successfull = False
             if self.filesDict['maxInstances'] > 0 and (self.filesDict['maxInstances']) == self.successful_inst_count:
                 print(f'####################\nReached maximum instance count: {self.sol_count}\n#################### ')
                 print(self.successful_inst_count)

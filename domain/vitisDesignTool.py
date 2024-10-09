@@ -3,6 +3,7 @@ from domain.desingTool import DesignTool
 from domain.vivadoDesignTool import Vivado
 from domain.solution import Solution
 import xml.etree.ElementTree as ET
+from pathlib import Path
 import os.path
 import shutil
 import time
@@ -40,9 +41,22 @@ class Vitis(DesignTool):
         solution.setresults(results)
         return solution
     
-    def runSynthesis(self, solution: Solution, timeLimit = None, solutionSaver= None, sol_count = 1):
-        self.__killOnGoingVitisProcessIfAny()    
-        self.__killOnGoingVivadoProcessIfAny() 
+    def check_if_done(self, benchmark, sol_count):
+        sol = 'solution'+str(sol_count)
+        is_done = False
+        if Path(f'./DATASETS/{benchmark}/{sol}/impl/verilog/project.runs/impl_1/runme.log').is_file():
+            print('implementation exists!')
+            with open(f'./DATASETS/{benchmark}/{sol}/impl/verilog/project.runs/impl_1/runme.log', 'r') as f:
+                lines = f.readlines()
+                for line in lines:
+                    if line.find('report_power completed successfully') != -1:
+                        is_done = True
+        return is_done
+
+    def runSynthesis(self, solution: Solution, timeLimit = None, solutionSaver= None, benchmark = '', sol_count = 1):
+        is_done = False
+        #self.__killOnGoingVitisProcessIfAny()    
+        #self.__killOnGoingVivadoProcessIfAny() 
         #if not especified, there is infinite time to run synthesis
         if timeLimit is None:
             timeLimit = float('inf')
@@ -57,27 +71,23 @@ class Vitis(DesignTool):
         start = time.time()
         parent_pid = p.pid
         parent_process = psutil.Process(parent_pid)
-        while parent_process.is_running():
-            time.sleep(3)
-            if time.time() - start > timeLimit:
+        while parent_process.is_running() and parent_process.status() != psutil.STATUS_ZOMBIE:
+            time.sleep(60)
+            is_done = self.check_if_done(benchmark, sol_count)
+            if time.time() - start > timeLimit or is_done == True:
                 print('########################################################')
-                print(f'run {sol_count} exceeded time limit! Killing processes...')
+                if is_done:
+                  print(f'run {sol_count} was successfull! Killing processes...')  
+                else:
+                    print(f'run {sol_count} exceeded time limit! Killing processes...')
                 print('########################################################')
                 for p in parent_process.children(recursive=True):
                     p.kill()
                 parent_process.kill()
                 print('finished killing processes')
-                break
 
-        #self.__monitorVitisProcess(timeLimit, solutionSaver)
-        #self.__monitorVivadoProcess(timeLimit, solutionSaver)
-
-        # xml='./Raise_dse/solution1/syn/report/csynth.xml'
-        # results = self.__getResultsFromSynthesis(xml)
-        # for key in results:
-        #     solution.setOneResult(key, results[key])
-        # print (results)
-        return solution
+        is_done = self.check_if_done(benchmark, sol_count) #last check
+        return is_done
 
     def __writeDirectivesIntoFile(self,directives):
         directivesFile = open(self._DIRECTIVES_FILENAME, "w")

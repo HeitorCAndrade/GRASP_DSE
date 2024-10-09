@@ -280,11 +280,14 @@ class Heuristic(ABC):
         """
         Calls synthesis and, if its successful, it saves solution in self.solutions.
         """
+        was_successfull = False
         designTool = DesignToolFactory.getDesignTool(designToolChoice)
         try:
-            designTool.runSynthesis(solution,timeLimit,solutionSaver, sol_count)
+            was_successfull = designTool.runSynthesis(solution,timeLimit,solutionSaver, self.benchName, sol_count)
         except Exception as e:
             raise
         else:
             self.appendSolution(solution)
+
+        return was_successfull
             
