@@ -146,13 +146,20 @@ class Heuristic(ABC):
         loopsInformation = self.DSEconfig['nested_loops']
         #check if a pipeline is applied to a fully unrolled loop 
         factorRegex = '\s-factor\s'
-        for item in directivesByLabel.values():
+        for key, item in directivesByLabel.items():
+            print(f'key {key} item {item}')
             if 'pipeline' not in item or 'unroll' not in item:
                 pass
             elif item['pipeline'] == '' or item['unroll'] == '':
                 pass
             #if there isnt a factor argument on directive, then its fully unrolled    
             elif re.search(factorRegex,item['unroll']) is None:
+                return True
+
+            #loop cannot be fully unrolled and flattened at the same time
+            if 'loop_flatten' not in item:
+                pass
+            elif re.search(factorRegex,item['unroll']) is None and item['loop_flatten'] != '':
                 return True
 
         for loop in loopsInformation:
