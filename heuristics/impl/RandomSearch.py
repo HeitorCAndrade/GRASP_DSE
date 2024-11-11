@@ -41,9 +41,31 @@ class RandomSearch(Heuristic):
     def setTimeLimit(self,seconds):
         self._SECONDS = seconds
 
+
+    def verify_successful_runs(self, benchName):
+        print('verifying successful runs...')
+        suc_runs = 0
+        if not Path(f'./DATASETS/{benchName}').is_dir():
+            print('benchmark directory not found, assuming 0 successful runs...')
+            return suc_runs
+        else:
+            for dir in os.listdir(path=f'./DATASETS/{benchName}'):
+                if Path(f'./DATASETS/{benchName}/{dir}/impl/verilog/project.runs/impl_1/runme.log').is_file():
+                    with open(f'./DATASETS/{benchName}/{dir}/impl/verilog/project.runs/impl_1/runme.log', 'r') as f:
+                        lines = f.readlines()
+                        for line in lines:
+                            if line.find('report_power completed successfully') != -1:
+                                suc_runs = suc_runs + 1
+            if suc_runs > 0:
+                print(f'found {suc_runs} successful runs!')
+            else:
+                print(f'no successful runs found!')
+            return suc_runs
+
     def run(self):
         was_successfull = False
         #inTime = True
+        manual_suc_verif = 0
         new_sol = 'solution1'
         benchName = self.filesDict['benchName']
         #start = time.time()
@@ -53,8 +75,12 @@ class RandomSearch(Heuristic):
                 print('Found permutation file!')
                 self.successful_inst_count, controlTree = self.getStoredPermutations()
                 if self.successful_inst_count == -1:
-                    self.successful_inst_count = 0  #value to be changed for runs prior to the count store implementation
-                
+                    self.successful_inst_count = self.verify_successful_runs(benchName)
+                manual_suc_verif = self.verify_successful_runs(benchName)
+
+                if manual_suc_verif != self.successful_inst_count:
+                    print('WARNING! STORED SUCCESSFUL COUNT WAS NOT UPDATED CORRECTLY!')
+                    self.successful_inst_count = manual_suc_verif
                 self.sol_count = self.successful_inst_count+1
                 print(self.successful_inst_count)
                 new_sol = 'solution' + str(self.sol_count)
@@ -73,39 +99,26 @@ class RandomSearch(Heuristic):
 
                 generateScript(self.filesDict['cFiles'], self.filesDict['prjFile'], self.filesDict['benchName'], new_sol)
             else:
-                print('WARNING: recursive flag set to True but no permutation file was found!')
+                print('WARNING: resume flag set to True but no permutation file was found!')
         
-        #print(controlTree)
-        #print('########################################################')
         while True:
             onePermutation = self.generateRandomPermutation(controlTree)
             self.sol_exists = True
-            #print(onePermutation)
-            #print('########################################################')
-            #print(f'type: {type(controlTree)}')
-            #print(controlTree)
-            #print('########################################################')
             if onePermutation:    #se tiver uma permutacao na variavel
                 solution = Solution(onePermutation)         #Solutions a partir deste
                 try:
-                    #synthesisTimeLimit = self._SECONDS - (time.time() - start) 
                     print(f'executing {new_sol}...')
                     was_successfull = self.synthesisWrapper(solution, self.synthesisTimeLimit, self.solutionSaver, self.sol_count)
                     
                 except Exception as e:
                     print(e)
-                #executa else qnd try roda sem erros
                 else:   
-                    #print(solution.results) 
-                    #print (len(self.solutions))   
-                    #self.storePermutations(controlTree)
                     print(f'done instance {new_sol}!')   
 
             end = time.time()
             if not onePermutation:
                 print('####################\nNo permutations left!\n#################### ')
                 break
-            #if Path(f'./DATASETS/{benchName}/{new_sol}/impl/verilog/project.runs/impl_1/runme.log').is_file():
             if was_successfull:
                 self.successful_inst_count = self.successful_inst_count + 1
                 self.storePermutations(controlTree, self.successful_inst_count)
