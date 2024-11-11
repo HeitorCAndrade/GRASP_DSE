@@ -60,7 +60,7 @@ class RandomSearch(Heuristic):
                 new_sol = 'solution' + str(self.sol_count)
                 self.sol_exists = True
                 while (self.sol_exists):
-                    self.sol_exists = True
+                    self.sol_exists = False
                     if Path(f'./DATASETS/{benchName}/{new_sol}/impl/verilog/project.runs/impl_1/runme.log').is_file():
                         with open(f'./DATASETS/{benchName}/{new_sol}/impl/verilog/project.runs/impl_1/runme.log', 'r') as f:
                             lines = f.readlines()
@@ -69,10 +69,7 @@ class RandomSearch(Heuristic):
                                     print('implementation already done!')
                                     self.sol_count = self.sol_count + 1
                                     new_sol = 'solution' + str(self.sol_count)
-                                else:
-                                    self.sol_exists = False
-                    else:
-                        self.sol_exists = False
+                                    self.sol_exists = True
 
                 generateScript(self.filesDict['cFiles'], self.filesDict['prjFile'], self.filesDict['benchName'], new_sol)
             else:
@@ -124,7 +121,7 @@ class RandomSearch(Heuristic):
             new_sol = 'solution' + str(self.sol_count)
             self.sol_exists = True
             while (self.sol_exists):
-                self.sol_exists = True
+                self.sol_exists = False
                 if Path(f'./DATASETS/{benchName}/{new_sol}/impl/verilog/project.runs/impl_1/runme.log').is_file():
                     with open(f'./DATASETS/{benchName}/{new_sol}/impl/verilog/project.runs/impl_1/runme.log', 'r') as f:
                         lines = f.readlines()
@@ -133,10 +130,8 @@ class RandomSearch(Heuristic):
                                 print('implementation already done!')
                                 self.sol_count = self.sol_count + 1
                                 new_sol = 'solution' + str(self.sol_count)
-                            else:
-                                self.sol_exists = False
-                else:
-                    self.sol_exists = False
+                                self.sol_exists = True
+                                
             generateScript(self.filesDict['cFiles'], self.filesDict['prjFile'], self.filesDict['benchName'], new_sol)
             if self.solutionSaver:
                 self.solutionSaver.save(self.solutions,'./time_stamps/timeStampRandomSearch')              
