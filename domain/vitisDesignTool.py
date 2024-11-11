@@ -45,7 +45,6 @@ class Vitis(DesignTool):
         sol = 'solution'+str(sol_count)
         is_done = False
         if Path(f'./DATASETS/{benchmark}/{sol}/impl/verilog/project.runs/impl_1/runme.log').is_file():
-            print('implementation exists!')
             with open(f'./DATASETS/{benchmark}/{sol}/impl/verilog/project.runs/impl_1/runme.log', 'r') as f:
                 lines = f.readlines()
                 for line in lines:

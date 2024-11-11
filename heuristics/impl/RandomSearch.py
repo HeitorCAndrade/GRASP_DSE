@@ -43,13 +43,15 @@ class RandomSearch(Heuristic):
 
 
     def verify_successful_runs(self, benchName):
-        print('verifying successful runs...')
+        print(f'verifying successful runs for {benchName}...')
         suc_runs = 0
         if not Path(f'./DATASETS/{benchName}').is_dir():
             print('benchmark directory not found, assuming 0 successful runs...')
             return suc_runs
         else:
-            for dir in os.listdir(path=f'./DATASETS/{benchName}'):
+            directories = os.listdir(path=f'./DATASETS/{benchName}')
+            print(f'solutions found: {len(directories)}')
+            for dir in directories:
                 if Path(f'./DATASETS/{benchName}/{dir}/impl/verilog/project.runs/impl_1/runme.log').is_file():
                     with open(f'./DATASETS/{benchName}/{dir}/impl/verilog/project.runs/impl_1/runme.log', 'r') as f:
                         lines = f.readlines()
@@ -79,7 +81,7 @@ class RandomSearch(Heuristic):
                 manual_suc_verif = self.verify_successful_runs(benchName)
 
                 if manual_suc_verif != self.successful_inst_count:
-                    print('WARNING! STORED SUCCESSFUL COUNT WAS NOT UPDATED CORRECTLY!')
+                    print(f'WARNING! STORED SUCCESSFUL COUNT WAS NOT UPDATED CORRECTLY! {manual_suc_verif}, {self.successful_inst_count}')
                     self.successful_inst_count = manual_suc_verif
                 self.sol_count = self.successful_inst_count+1
                 print(self.successful_inst_count)
@@ -92,7 +94,7 @@ class RandomSearch(Heuristic):
                             lines = f.readlines()
                             for line in lines:
                                 if line.find('report_power completed successfully') != -1:
-                                    print('implementation already done!')
+                                    print(f'implementation {new_sol} already done!')
                                     self.sol_count = self.sol_count + 1
                                     new_sol = 'solution' + str(self.sol_count)
                                     self.sol_exists = True
@@ -130,6 +132,12 @@ class RandomSearch(Heuristic):
                 print(self.successful_inst_count)
                 print(self.filesDict['maxInstances'])
                 break
+            if self.successful_inst_count > 1 and (self.filesDict['maxInstances']) == (self.successful_inst_count / 2):
+                print('half instance count reached, verifying completed ones ...')
+                manual_suc_verif = self.verify_successful_runs(benchName)
+                if manual_suc_verif != self.successful_inst_count:
+                    print('successful runs count mismatch! correcting...')
+                    self.successful_inst_count = manual_suc_verif
             self.sol_count = self.sol_count + 1
             new_sol = 'solution' + str(self.sol_count)
             self.sol_exists = True
@@ -140,7 +148,7 @@ class RandomSearch(Heuristic):
                         lines = f.readlines()
                         for line in lines:
                             if line.find('report_power completed successfully') != -1:
-                                print('implementation already done!')
+                                print(f'implementation {new_sol} already done!')
                                 self.sol_count = self.sol_count + 1
                                 new_sol = 'solution' + str(self.sol_count)
                                 self.sol_exists = True

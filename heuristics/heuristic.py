@@ -147,7 +147,7 @@ class Heuristic(ABC):
         #check if a pipeline is applied to a fully unrolled loop 
         factorRegex = '\s-factor\s'
         for key, item in directivesByLabel.items():
-            print(f'key {key} item {item}')
+            #print(f'key {key} item {item}')
             if 'pipeline' not in item or 'unroll' not in item:
                 pass
             elif item['pipeline'] == '' or item['unroll'] == '':
