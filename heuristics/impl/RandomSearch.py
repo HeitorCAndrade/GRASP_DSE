@@ -29,6 +29,7 @@ class RandomSearch(Heuristic):
     
     def __init__(self,filesDict,timeLimit=3600,solutionSaver:SolutionsSaver = None):
         super().__init__(filesDict)
+        self.sol_exists = False
         self.sol_count = 1
         self.successful_inst_count = 0
         self.solutionSaver = solutionSaver
@@ -52,11 +53,27 @@ class RandomSearch(Heuristic):
                 print('Found permutation file!')
                 self.successful_inst_count, controlTree = self.getStoredPermutations()
                 if self.successful_inst_count == -1:
-                    self.successful_inst_count = 9  #value to be changed for runs prior to the count store implementation
+                    self.successful_inst_count = 0  #value to be changed for runs prior to the count store implementation
                 
                 self.sol_count = self.successful_inst_count+1
                 print(self.successful_inst_count)
                 new_sol = 'solution' + str(self.sol_count)
+                self.sol_exists = True
+                while (self.sol_exists):
+                    self.sol_exists = True
+                    if Path(f'./DATASETS/{benchName}/{new_sol}/impl/verilog/project.runs/impl_1/runme.log').is_file():
+                        with open(f'./DATASETS/{benchName}/{new_sol}/impl/verilog/project.runs/impl_1/runme.log', 'r') as f:
+                            lines = f.readlines()
+                            for line in lines:
+                                if line.find('report_power completed successfully') != -1:
+                                    print('implementation already done!')
+                                    self.sol_count = self.sol_count + 1
+                                    new_sol = 'solution' + str(self.sol_count)
+                                else:
+                                    self.sol_exists = False
+                    else:
+                        self.sol_exists = False
+
                 generateScript(self.filesDict['cFiles'], self.filesDict['prjFile'], self.filesDict['benchName'], new_sol)
             else:
                 print('WARNING: recursive flag set to True but no permutation file was found!')
@@ -65,6 +82,7 @@ class RandomSearch(Heuristic):
         #print('########################################################')
         while True:
             onePermutation = self.generateRandomPermutation(controlTree)
+            self.sol_exists = True
             #print(onePermutation)
             #print('########################################################')
             #print(f'type: {type(controlTree)}')
@@ -104,6 +122,21 @@ class RandomSearch(Heuristic):
                 break
             self.sol_count = self.sol_count + 1
             new_sol = 'solution' + str(self.sol_count)
+            self.sol_exists = True
+            while (self.sol_exists):
+                self.sol_exists = True
+                if Path(f'./DATASETS/{benchName}/{new_sol}/impl/verilog/project.runs/impl_1/runme.log').is_file():
+                    with open(f'./DATASETS/{benchName}/{new_sol}/impl/verilog/project.runs/impl_1/runme.log', 'r') as f:
+                        lines = f.readlines()
+                        for line in lines:
+                            if line.find('report_power completed successfully') != -1:
+                                print('implementation already done!')
+                                self.sol_count = self.sol_count + 1
+                                new_sol = 'solution' + str(self.sol_count)
+                            else:
+                                self.sol_exists = False
+                else:
+                    self.sol_exists = False
             generateScript(self.filesDict['cFiles'], self.filesDict['prjFile'], self.filesDict['benchName'], new_sol)
             if self.solutionSaver:
                 self.solutionSaver.save(self.solutions,'./time_stamps/timeStampRandomSearch')              
