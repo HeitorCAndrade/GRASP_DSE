@@ -8,6 +8,11 @@ open_project $benchmark_path
 set_top $fun_top
 add_files {$arq_cpp}
 open_solution $solution
+
+config_compile -pipeline_loops 999
+config_array_partition -throughput_driven off
+#config_unroll -tripcount_threshold 0
+
 set_part {xcu50-fsvh2104-2-e}
 create_clock -period 8 -name default
 source "./domain/directives.tcl"

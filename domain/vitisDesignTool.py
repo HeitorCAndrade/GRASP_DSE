@@ -4,6 +4,7 @@ from domain.vivadoDesignTool import Vivado
 from domain.solution import Solution
 import xml.etree.ElementTree as ET
 from pathlib import Path
+import signal
 import os.path
 import shutil
 import time
@@ -52,6 +53,34 @@ class Vitis(DesignTool):
                         is_done = True
         return is_done
 
+
+    def altRunSynth(self, solution: Solution, timeLimit = None, solutionSaver= None, benchmark = '', sol_count = 1):
+        if timeLimit is None:
+            timeLimit = float('inf')
+        if timeLimit<=0:
+            raise Exception(f"****{self._PROCESSNAME} has exceed max time usage****")
+        self.__writeDirectivesIntoFile(solution.directives)
+        print('########################################################')
+        print(f'starting run {sol_count}!')
+        print('########################################################')
+        try:
+            p = subprocess.Popen([self._SCRIPT_PATH], start_new_session=True)
+            p.wait(timeout=timeLimit)
+        except subprocess.TimeoutExpired:
+            print('########################################################')
+            print(f'Timeout for run {sol_count} ({timeLimit}s) expired')
+            print('Terminating the whole process group...')
+            os.killpg(os.getpgid(p.pid), signal.SIGKILL)
+            print('########################################################')
+
+        is_done = self.check_if_done(benchmark, sol_count)
+        if is_done:
+            print('########################################################')
+            print(f'run {sol_count} was successfull!')  
+            print('########################################################')
+
+        return is_done
+
     def runSynthesis(self, solution: Solution, timeLimit = None, solutionSaver= None, benchmark = '', sol_count = 1):
         is_done = False
         #self.__killOnGoingVitisProcessIfAny()    
@@ -89,6 +118,8 @@ class Vitis(DesignTool):
         return is_done
 
     def __writeDirectivesIntoFile(self,directives):
+        print('directives used')
+        print(directives)
         directivesFile = open(self._DIRECTIVES_FILENAME, "w")
         for value in directives.values():
             if value != '' and value is not None:

@@ -64,6 +64,42 @@ class RandomSearch(Heuristic):
                 print(f'no successful runs found!')
             return suc_runs
 
+
+    def run_base_inst(self, controlTree):
+        is_first_run = True
+        new_sol = 'solution1'
+        sol_index = 1
+        successfull_runs = 0
+        benchName = self.filesDict['benchName']
+        current_directive = ''
+        dir_index = 1
+
+        permutation, current_directive, dir_index, is_first_run = self.generateSingularPermutations(controlTree, current_directive, dir_index, is_first_run)
+        solution = Solution(permutation)
+        generateScript(self.filesDict['cFiles'], self.filesDict['prjFile'], self.filesDict['benchName'], new_sol)
+        was_successfull = self.synthesisWrapper(solution, self.synthesisTimeLimit, self.solutionSaver, sol_index, designToolChoice='vitis')
+        if was_successfull:
+            successfull_runs = successfull_runs + 1
+        sol_index = sol_index + 1
+        while not is_first_run:
+            permutation, current_directive, dir_index, is_first_run = self.generateSingularPermutations(controlTree, current_directive, dir_index, is_first_run)
+            solution = Solution(permutation)
+            new_sol = 'solution'+str(sol_index)
+            generateScript(self.filesDict['cFiles'], self.filesDict['prjFile'], self.filesDict['benchName'], new_sol)
+            was_successfull = self.synthesisWrapper(solution, self.synthesisTimeLimit, self.solutionSaver, sol_index, designToolChoice='vitis')
+            if was_successfull:
+                successfull_runs = successfull_runs + 1
+            sol_index = sol_index + 1
+
+        verified_successfull_runs = self.verify_successful_runs(benchName)
+
+        print(f'atempted runs: {sol_index-1}')
+        print(f'counted successful runs: {successfull_runs}')
+        print(f'verified successful runs: {verified_successfull_runs}')
+
+        return controlTree, sol_index, verified_successfull_runs
+        
+
     def run(self):
         was_successfull = False
         #inTime = True
@@ -103,6 +139,9 @@ class RandomSearch(Heuristic):
             else:
                 print('WARNING: resume flag set to True but no permutation file was found!')
         
+        controlTree, self.sol_count, self.successful_inst_count = self.run_base_inst(controlTree)
+        print('finished base runs!')
+
         while True:
             onePermutation = self.generateRandomPermutation(controlTree)
             self.sol_exists = True
@@ -128,10 +167,15 @@ class RandomSearch(Heuristic):
                 print(f'####################\n{self.sol_count} failed!\n#################### ')
             was_successfull = False
             if self.filesDict['maxInstances'] > 0 and (self.filesDict['maxInstances']) == self.successful_inst_count:
-                print(f'####################\nReached maximum instance count: {self.sol_count}\n#################### ')
-                print(self.successful_inst_count)
-                print(self.filesDict['maxInstances'])
-                break
+                manual_suc_verif = self.verify_successful_runs(benchName)
+                if manual_suc_verif >= self.successful_inst_count:
+                    print('successful runs count mismatch! correcting...')
+                    self.successful_inst_count = manual_suc_verif
+                else:
+                    print(f'####################\nReached maximum instance count: {self.sol_count}\n#################### ')
+                    print(self.successful_inst_count)
+                    print(self.filesDict['maxInstances'])
+                    break
             if self.successful_inst_count > 1 and (self.filesDict['maxInstances']) == (self.successful_inst_count / 2):
                 print('half instance count reached, verifying completed ones ...')
                 manual_suc_verif = self.verify_successful_runs(benchName)

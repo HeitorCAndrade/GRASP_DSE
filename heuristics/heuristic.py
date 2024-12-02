@@ -209,10 +209,43 @@ class Heuristic(ABC):
                         return True
         return False
     
+    def generateSingularPermutations(self, controlTree, current_directive, current_index, first_time = False):
+        node = controlTree
+        directiveIteration = dict.fromkeys(self.dictDir,'')
+        if not first_time:
+            domainLenght = len(self.dictDir[current_directive])   
+        for directiveGroup in self.dictDir: 
+            if first_time:
+                first_time = False
+                current_directive = directiveGroup
+                domainLenght = len(self.dictDir[current_directive]) 
+                current_index = 1
+            if directiveGroup != current_directive:
+                directiveIteration[directiveGroup] = self.dictDir[directiveGroup][0] 
+            else:
+                if current_index < domainLenght:
+                    directiveIteration[directiveGroup] = self.dictDir[directiveGroup][current_index] 
+                    current_index = current_index + 1
+                else:
+                    directiveIteration[directiveGroup] = self.dictDir[directiveGroup][0]
+                    first_time = True
+
+            if current_index in node:
+                node = node[current_index]
+            else:
+                node[current_index] = {} #cria nodo
+                node = node[current_index]  
+
+        return directiveIteration, current_directive, current_index, first_time
+                
+
+    
     def generateRandomPermutation(self,controlTree):
         """ non repeating random permutation generator"""
         node = controlTree
         newPermutation = dict.fromkeys(self.dictDir,'')
+        print('permutation')
+        print(newPermutation)
         isNewPermutation = False #flag para verificar se é permutacao/solucao/design repetida ou nao
         for directiveGroup in self.dictDir:              
             domainLenght = len(self.dictDir[directiveGroup])   
@@ -283,14 +316,17 @@ class Heuristic(ABC):
         self.solutions.append(deep)               
 
 
-    def synthesisWrapper(self,solution:Solution, timeLimit=None, solutionSaver= None, sol_count = 1, designToolChoice = "vitis"):
+    def synthesisWrapper(self,solution:Solution, timeLimit=None, solutionSaver= None, sol_count = 1, designToolChoice = "vitis", altSynth = False):
         """
         Calls synthesis and, if its successful, it saves solution in self.solutions.
         """
         was_successfull = False
         designTool = DesignToolFactory.getDesignTool(designToolChoice)
         try:
-            was_successfull = designTool.runSynthesis(solution,timeLimit,solutionSaver, self.benchName, sol_count)
+            if not altSynth:
+                was_successfull = designTool.runSynthesis(solution,timeLimit,solutionSaver, self.benchName, sol_count)
+            else:
+                was_successfull = designTool.altRunSynth(solution,timeLimit,solutionSaver, self.benchName, sol_count)
         except Exception as e:
             raise
         else:
