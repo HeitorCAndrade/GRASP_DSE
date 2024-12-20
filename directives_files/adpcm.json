@@ -3,7 +3,7 @@
         {  
            
             "pipeline encode_label0": {
-                "possible_directives":["",
+                "possible_directives":["set_directive_pipeline -off \"encode/encode_label0\"",
                 "set_directive_pipeline \"encode/encode_label0\""],
                 "function":"encode",
                 "label": "encode_label0",
@@ -11,7 +11,7 @@
                 "directive_type":"pipeline"
             },
             "pipeline encode_label1": {
-                "possible_directives":["",
+                "possible_directives":["set_directive_pipeline -off \"encode/encode_label1\"",
                 "set_directive_pipeline \"encode/encode_label1\""],
                 "function":"encode",
                 "label": "encode_label1",
@@ -19,7 +19,7 @@
                 "directive_type":"pipeline"
             },
             "pipeline decode_label2": {
-                "possible_directives":["",
+                "possible_directives":["set_directive_pipeline -off \"decode/decode_label2\"",
                 "set_directive_pipeline \"decode/decode_label2\""],
                 "function":"decode",
                 "label": "decode_label2",
@@ -27,7 +27,7 @@
                 "directive_type":"pipeline"
             },
             "pipeline decode_label3": {
-                "possible_directives":["",
+                "possible_directives":["set_directive_pipeline -off \"decode/decode_label3\"",
                 "set_directive_pipeline \"decode/decode_label3\""],
                 "function":"decode",
                 "label": "decode_label3",
@@ -35,7 +35,7 @@
                 "directive_type":"pipeline"
             },
             "pipeline reset_label4": {
-                "possible_directives":["",
+                "possible_directives":["set_directive_pipeline -off \"reset/reset_label4\"",
                 "set_directive_pipeline \"reset/reset_label4\""],
                 "function":"reset",
                 "label": "reset_label4",
@@ -43,7 +43,7 @@
                 "directive_type":"pipeline"
             },
             "pipeline reset_label5": {
-                "possible_directives":["",
+                "possible_directives":["set_directive_pipeline -off \"reset/reset_label5\"",
                 "set_directive_pipeline \"reset/reset_label5\""],
                 "function":"reset",
                 "label": "reset_label5",
@@ -51,7 +51,7 @@
                 "directive_type":"pipeline"
             },
             "pipeline reset_label6": {
-                "possible_directives":["",
+                "possible_directives":["set_directive_pipeline -off \"reset/reset_label6\"",
                 "set_directive_pipeline \"reset/reset_label6\""],
                 "function":"reset",
                 "label": "reset_label6",
@@ -59,7 +59,7 @@
                 "directive_type":"pipeline"
             },
             "pipeline reset_label7": {
-                "possible_directives":["",
+                "possible_directives":["set_directive_pipeline -off \"reset/reset_label7\"",
                 "set_directive_pipeline \"reset/reset_label7\""],
                 "function":"reset",
                 "label": "reset_label7",
@@ -67,7 +67,7 @@
                 "directive_type":"pipeline"
             },
             "pipeline filtez_label8": {
-                "possible_directives":["",
+                "possible_directives":["set_directive_pipeline -off \"filtez/filtez_label8\"",
                 "set_directive_pipeline \"filtez/filtez_label8\""],
                 "function":"filtez",
                 "label": "filtez_label8",
@@ -75,7 +75,7 @@
                 "directive_type":"pipeline"
             },
             "pipeline quantl_label9": {
-                "possible_directives":["",
+                "possible_directives":["set_directive_pipeline -off \"quantl/quantl_label9\"",
                 "set_directive_pipeline \"quantl/quantl_label9\""],
                 "function":"quantl",
                 "label": "quantl_label9",
@@ -83,7 +83,7 @@
                 "directive_type":"pipeline"
             },
             "pipeline upzero_label10": {
-                "possible_directives":["",
+                "possible_directives":["set_directive_pipeline -off \"upzero/upzero_label10\"",
                 "set_directive_pipeline \"upzero/upzero_label10\""],
                 "function":"upzero",
                 "label": "upzero_label10",
@@ -91,7 +91,7 @@
                 "directive_type":"pipeline"
             },
             "pipeline upzero_label11": {
-                "possible_directives":["",
+                "possible_directives":["set_directive_pipeline -off \"upzero/upzero_label11\"",
                 "set_directive_pipeline \"upzero/upzero_label11\""],
                 "function":"upzero",
                 "label": "upzero_label11",
@@ -99,7 +99,7 @@
                 "directive_type":"pipeline"
             },
             "pipeline adpcm_main_label12": {
-                "possible_directives":["",
+                "possible_directives":["set_directive_pipeline -off \"adpcm_main/adpcm_main_label12\"",
                 "set_directive_pipeline \"adpcm_main/adpcm_main_label12\""],
                 "function":"adpcm_main",
                 "label": "adpcm_main_label12",
@@ -107,7 +107,7 @@
                 "directive_type":"pipeline"
             },
             "pipeline adpcm_main_label13": {
-                "possible_directives":["",
+                "possible_directives":["set_directive_pipeline -off \"adpcm_main/adpcm_main_label13\"",
                 "set_directive_pipeline \"adpcm_main/adpcm_main_label13\""],
                 "function":"adpcm_main",
                 "label": "adpcm_main_label13",

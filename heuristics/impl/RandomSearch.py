@@ -33,11 +33,15 @@ class RandomSearch(Heuristic):
         self.sol_count = 1
         self.successful_inst_count = 0
         self.solutionSaver = solutionSaver
+        self.benchName = self.filesDict['benchName']
         self.filesDict = filesDict
         self.synthesisTimeLimit = int(filesDict['timeLimit'])
         self._SECONDS = timeLimit
         seed()
-        self.run()
+        if self.filesDict['verify']:
+            self.verify_successful_runs(self.benchName)
+        else:
+            self.run()
     def setTimeLimit(self,seconds):
         self._SECONDS = seconds
 

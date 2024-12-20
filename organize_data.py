@@ -1,10 +1,14 @@
 import numpy as np
 import pandas as pd
 import xml.etree.ElementTree as ET
+import pathlib
 from pathlib import Path
 from argparse import ArgumentParser
+import shutil
 import matplotlib
 import json
+import glob
+import os
 import matplotlib.pyplot as plt
 import re
 
@@ -33,43 +37,6 @@ def extract_power_report(project_path, solution):
             static_power = float((rx.findall(line))[0])
 
     return [total_power, dynamic_power, static_power]
-
-# def extract_timing_summary(project_path, solution):
-#     numeric_const_pattern = '[-+]? (?: (?: \d* \. \d+ ) | (?: \d+ \.? ) )(?: [Ee] [+-]? \d+ ) ?'
-#     rx = re.compile(numeric_const_pattern, re.VERBOSE)
-#     full_path = project_path + solution + "impl/verilog/project.runs/impl_1/"
-#     report_name = "bd_0_wrapper_timing_summary_routed.rpt"
-
-#     timing_ar = []
-#     for _ in range(6):
-#         timing_ar.append(np.NAN)
-
-#     if not Path(full_path+report_name).is_file():
-#         return [-1, -1, -1, -1]
-    
-#     with open(full_path+report_name, "r") as rpt:
-#         lines = rpt.readlines()
-
-#     line_count = 0
-#     for line in lines:
-#         if line.find('Design Timing Summary') != -1:
-#             start_line_count = True
-            
-#         if start_line_count:
-#             line_count += 1
-
-#         if line_count == 10:
-#             str_list = rx.findall(line)
-#             timing_ar[0] = float(str_list[0]) # vivado_WNS
-#             timing_ar[1] = float(str_list[1]) # vivado_TNS
-#             timing_ar[2] = float(str_list[4]) # vivado_WHS
-#             timing_ar[3] = float(str_list[5]) # vivado_THS
-#             timing_ar[4] = float(str_list[8]) # vivado_WPWS
-#             timing_ar[5] = float(str_list[9]) # vivado_TPWS
-
-#     #TODO: find and return worst slack path
-
-#     return timing_ar
 
 
 def extract_timing_summary(bench_name, solution):
@@ -118,12 +85,96 @@ def extract_hls_report(bench_name, solution):
     return -1, -1.0
 
 
+def copy_prj_files(bench_name, solution):
+    from_dir = f'./DATASETS/{bench_name}/{solution}/'
+    to_dir = f'./DATASETS/filtered/{bench_name}/{solution}/'
+
+    warn_missing = False
+
+    f = open(to_dir+'__MISSING_FILES__', 'w')
+
+    #IRs:
+    Path(to_dir+'IRs').mkdir()
+    for file in glob.glob(os.path.join(from_dir+'.autopilot/db/',"*.bc")):
+        shutil.copy2(file, to_dir+'IRs/')
+    #TODO: copiar o outro IR -> falar com Gabriel
+
+    #directives
+    try:
+        shutil.copyfile(from_dir+f'{solution}.directive', to_dir+f'{solution}.directive')
+    except:
+        f.write('missing directive file\n')
+
+    try:
+        shutil.copyfile(from_dir+f'{solution}_data.json', to_dir+f'{solution}_data.json')
+    except:
+        f.write('missing json directive file\n')
+
+    #reports
+    Path(to_dir+'reports').mkdir()
+    try: 
+        shutil.copyfile(from_dir+'syn/report/csynth.rpt', to_dir+'reports/csynth.rpt')
+    except:
+        f.write('missing csynth rpt\n')
+        warn_missing = True
+    try:
+        shutil.copyfile(from_dir+'syn/report/csynth.xml', to_dir+'reports/csynth.xml')
+    except:
+        f.write('missing csynth xml\n')
+        warn_missing = True
+
+    try:
+        shutil.copyfile(from_dir+'impl/report/verilog/export_syn.rpt', to_dir+'reports/export_syn.rpt')
+        shutil.copyfile(from_dir+'impl/report/verilog/export_syn.xml', to_dir+'reports/export_syn.xml')
+    except:
+        f.write('missing export synth files\n')
+        warn_missing = True
+
+    try:
+        shutil.copyfile(from_dir+'impl/report/verilog/export_impl.rpt', to_dir+'reports/export_impl.rpt')
+        shutil.copyfile(from_dir+'impl/report/verilog/export_impl.xml', to_dir+'reports/export_impl.xml')
+    except:
+        f.write('missing export impl files\n')
+        warn_missing = True
+
+    try:
+        shutil.copyfile(from_dir+'impl/verilog/project.runs/impl_1/bd_0_wrapper_power_routed.rpt', to_dir+'reports/impl_power.rpt')
+        shutil.copyfile(from_dir+'impl/verilog/project.runs/impl_1/bd_0_wrapper_timing_summary_routed.rpt', to_dir+'reports/impl_timing_summary.rpt')
+        shutil.copyfile(from_dir+'impl/verilog/project.runs/impl_1/bd_0_wrapper_utilization_placed.rpt', to_dir+'reports/impl_utilization_placed.rpt')
+    except:
+        f.write('missing project implementation reports\n')
+        warn_missing = True
+
+    try:
+        shutil.copyfile(from_dir+'impl/verilog/project.runs/impl_1/runme.log', to_dir+'reports/impl_runme.log')
+    except:
+        f.write('missing implementation log\n')
+        warn_missing = True
+    try:
+        shutil.copyfile(from_dir+'impl/verilog/project.runs/synth_1/runme.log', to_dir+'reports/synth_runme.log')
+    except:
+        f.write('missing logic synthesis log\n')
+        warn_missing = True
+
+    #miscellaneous files 
+    try:
+        shutil.copyfile(from_dir+'impl/export.dcp', to_dir+'export.dcp')
+    except:
+        f.write('missing design checkpoint (.dcp)\n')
+        warn_missing = True
+
+
+    f.close()
+    if not warn_missing:
+        Path(to_dir+'__MISSING_FILES__').unlink()
+
 def organize_data(bench_name, filter_flag):
     #dataset_list = json.load("benchmarks.json")
     dset_dir = f'./DATASETS/{bench_name}'
     failed_instances = 0
     sol_index = 1
     sol_dir = 'solution' + str(sol_index)
+    filtered_dir_ok = True
 
     list_to_df = []
 
@@ -132,7 +183,6 @@ def organize_data(bench_name, filter_flag):
 
     for _ in Path(dset_dir).iterdir():
         if Path(f'{dset_dir}/{sol_dir}').is_dir():
-            print('got here 0')
             vivado_WNS  = np.NAN #worst negative slack
             vivado_TNS  = np.NAN #total negative slack
             vivado_WHS  = np.NAN #worst hold slack
@@ -158,13 +208,23 @@ def organize_data(bench_name, filter_flag):
 
             directives  = []
 
+            if filter_flag:
+                try:
+                    Path(f'./DATASETS/filtered/{bench_name}').mkdir(parents=True)
+                except FileExistsError:
+                    pass
+                except:
+                    filtered_dir_ok = False
+                    print('an unexpected error occurred when creating the filtered directory!')
+                else:
+                    print('filtered directory created!')
+
+
             if Path(f'./DATASETS/{bench_name}/{sol_dir}/impl/verilog/project.runs/impl_1/runme.log').is_file():
-                print('got here 1')
                 with open(f'./DATASETS/{bench_name}/{sol_dir}/impl/verilog/project.runs/impl_1/runme.log', 'r') as f:
                     lines = f.readlines()
                     for line in lines:
                         if line.find('report_power completed successfully') != -1:
-                            print('got here 2')
                             #vivado_WNS, vivado_TNS, vivado_WHS, vivado_THS = extract_timing_summary(bench_name, sol_dir)
                             vivado_WNS, vivado_TNS = extract_timing_summary(bench_name, sol_dir)
                             vivado_pow, vivado_dynP, vivado_stcP = extract_power_report(bench_name, sol_dir)
@@ -173,6 +233,15 @@ def organize_data(bench_name, filter_flag):
 
                             list_to_df.append([sol_dir, vivado_LUT, vivado_BRAM, vivado_FF, vivado_DSP, vivado_CLB, vivado_latch, target_clock, achieved_clk,
                                                vivado_WNS, vivado_TNS, vitis_CC, vivado_pow, vivado_dynP, vivado_stcP])
+                            
+                            if filter_flag and filtered_dir_ok:
+                                try:
+                                    Path(f'./DATASETS/filtered/{bench_name}/{sol_dir}').mkdir()
+                                except Exception as e:
+                                    print(e)
+                                else:
+                                    copy_prj_files(bench_name, sol_dir)
+                                    
                         else:
                             failed_instances += 1
 
@@ -180,8 +249,8 @@ def organize_data(bench_name, filter_flag):
 
         sol_index += 1
         sol_dir = "solution" + str(sol_index)
-    print('list:')
-    print(list_to_df)
+    #print('list:')
+    #print(list_to_df)
     bench_dataframe = pd.DataFrame(list_to_df)
    # bench_dataframe.set_index(list(bench_dataframe)[0])
     bench_dataframe.columns = ['solution', 'lut', 'bram', 'ff', 'dsp', 'clb', 'latch', 'target_clk', 'achieved_clk', 'wns', 'tns', 'cycles', 'total_power', 'dynamic_power', 'static_power']
@@ -197,7 +266,7 @@ def main():
     parser = ArgumentParser()
 
     parser.add_argument('-b', '--benchmark', help='benchmark name or use \'*\' for all benchmarks available', required=True)
-    parser.add_argument('-f', '--filter', help='use this option to filter the benchmark, leaving only the reports, directives and IRs', required=False)
+    parser.add_argument('-f', '--filter', help='use this option to filter the benchmark, leaving only the reports, directives and IRs', required=False, nargs='?', const=1)
     parser.add_argument('-g', '--graphs', help='set this flag to make graphs comparing design resources usage vs design speed (in clock cycles)', required=False, nargs='?', const=1)
     parser.add_argument('-s', '--sanity-check', help='check if the benchmark has the amount provided of valid samples', required=False)
 
