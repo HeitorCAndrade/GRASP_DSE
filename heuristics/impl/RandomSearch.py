@@ -70,11 +70,12 @@ class RandomSearch(Heuristic):
             return suc_runs
 
 
-    def run_base_inst(self, controlTree):
+    def run_base_inst(self, controlTree, succ_prev_runs):
         is_first_run = True
         new_sol = 'solution1'
         sol_index = 1
-        successfull_runs = 0
+        successfull_runs = succ_prev_runs
+        store_count = 0
         benchName = self.filesDict['benchName']
         current_directive = ''
         dir_index = 1
@@ -93,6 +94,11 @@ class RandomSearch(Heuristic):
             generateScript(self.filesDict['cFiles'], self.filesDict['prjFile'], self.filesDict['benchName'], new_sol)
             was_successfull = self.synthesisWrapper(solution, self.synthesisTimeLimit, self.solutionSaver, sol_index, designToolChoice='vitis')
             if was_successfull:
+                if store_count == 5:
+                    self.storePermutations(controlTree, successfull_runs)
+                    store_count = 0
+                else:
+                    store_count = store_count + 1
                 successfull_runs = successfull_runs + 1
             sol_index = sol_index + 1
 
@@ -145,7 +151,9 @@ class RandomSearch(Heuristic):
                 print('WARNING: resume flag set to True but no permutation file was found!')
         
         if self.base_instances:
-            controlTree, self.sol_count, self.successful_inst_count = self.run_base_inst(controlTree)
+            print('starting base instances')
+            controlTree, self.sol_count, self.successful_inst_count = self.run_base_inst(controlTree, self.successful_inst_count)
+            self.storePermutations(controlTree, self.successful_inst_count)
             print('finished base runs!')
         else:
             print('base instances not set')
