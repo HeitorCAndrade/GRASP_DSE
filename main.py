@@ -41,6 +41,7 @@ if __name__ == "__main__":
     parser.add_argument("-i", "--instances", help="maximum amount of design instances", required=True)
     parser.add_argument("-r", "--resume", help="retrieves instances of previous runs (if any) and resumes from them", required=False, nargs='?', const=1)
     parser.add_argument("-v", "--verify", help = "verify number of valid runs from guiven benchmark",required=False, nargs='?', const=1)
+    parser.add_argument("-bi", "--base_instances", help = "build the base instances before instances generation",required=False, nargs='?', const=1)
 
     filesDict = {}
     # Read arguments from command line
@@ -72,6 +73,11 @@ if __name__ == "__main__":
         filesDict['verify'] = True
     else:
         filesDict['verify'] = False
+
+    if args.base_instances is not None:
+        filesDict['base_instances'] = True
+    else:
+        filesDict['base_instances'] = False
     
     # hour = 3600
     # RESOURCE_TO_COMPARE = 'resources'

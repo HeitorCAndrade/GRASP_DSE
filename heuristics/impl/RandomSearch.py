@@ -34,6 +34,7 @@ class RandomSearch(Heuristic):
         self.successful_inst_count = 0
         self.solutionSaver = solutionSaver
         self.benchName = self.filesDict['benchName']
+        self.base_instances = self.filesDict['base_instances']
         self.filesDict = filesDict
         self.synthesisTimeLimit = int(filesDict['timeLimit'])
         self._SECONDS = timeLimit
@@ -143,8 +144,11 @@ class RandomSearch(Heuristic):
             else:
                 print('WARNING: resume flag set to True but no permutation file was found!')
         
-        controlTree, self.sol_count, self.successful_inst_count = self.run_base_inst(controlTree)
-        print('finished base runs!')
+        if self.base_instances:
+            controlTree, self.sol_count, self.successful_inst_count = self.run_base_inst(controlTree)
+            print('finished base runs!')
+        else:
+            print('base instances not set')
 
         while True:
             onePermutation = self.generateRandomPermutation(controlTree)

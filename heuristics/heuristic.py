@@ -255,7 +255,12 @@ class Heuristic(ABC):
             #Ex: need to apply directive1 for directive_dataflow to work. For now i dont have such restrictions
             if self.isRestrictedDesign(newPermutation) or self.isRedundantDesign(newPermutation):
                 newPermutation[directiveGroup] = ''
-                indexOfEmptyDirective = self.dictDir[directiveGroup].index('')
+                current_directive = directiveGroup.split(' ')
+                if current_directive[0] == 'pipeline':
+                    indexOfEmptyDirective = 0
+                else:
+                    indexOfEmptyDirective = self.dictDir[directiveGroup].index('')
+                
                 randomDirective = indexOfEmptyDirective
 
             if randomDirective in node:
