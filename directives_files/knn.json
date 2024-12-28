@@ -22,13 +22,15 @@
                 "directive_type":"unroll"
         },
         "pipeline loop_i": {
-                "possible_directives":["","set_directive_pipeline \"md_kernel/loop_i\""],
+                "possible_directives":["set_directive_pipeline -off \"md_kernel/loop_i\"",
+                "set_directive_pipeline \"md_kernel/loop_i\""],
                 "function":"md_kernel",
                 "label": "loop_i",
                 "directive_type":"pipeline"
         },
         "pipeline loop_j": {
-                "possible_directives":["","set_directive_pipeline \"md_kernel/loop_j\""],
+                "possible_directives":["set_directive_pipeline -off \"md_kernel/loop_j\"",
+                "set_directive_pipeline \"md_kernel/loop_j\""],
                 "function":"md_kernel",
                 "label": "loop_j",
                 "directive_type":"pipeline"
@@ -179,7 +181,6 @@
                 "label":"loop_j",
                 "nest": {}
             }
-
         }
     ]
 }
