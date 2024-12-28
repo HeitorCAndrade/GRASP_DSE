@@ -5,9 +5,6 @@ M. D. Lam, E. E. Rothberg, and M. E. Wolf
 ASPLOS 1991
 */
 
-#include <stdio.h>
-#include <stdlib.h>
-
 //Data Type
 #define TYPE double
 

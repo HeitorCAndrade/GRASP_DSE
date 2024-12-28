@@ -52,31 +52,36 @@
             "directive_type":"unroll"
         },
         "pipeline loopjj":{
-            "possible_directives":["", "set_directive_pipeline \"bbgemm/loopjj\""],
+            "possible_directives":["set_directive_pipeline -off \"bbgemm/loopjj\"",
+            "set_directive_pipeline \"bbgemm/loopjj\""],
             "function":"bbgemm",
             "label": "loopjj",
             "directive_type":"pipeline"
         },
         "pipeline loopkk":{
-            "possible_directives":["", "set_directive_pipeline \"bbgemm/loopkk\""],
+            "possible_directives":["set_directive_pipeline -off \"bbgemm/loopkk\"",
+            "set_directive_pipeline \"bbgemm/loopkk\""],
             "function":"bbgemm",
             "label": "loopkk",
             "directive_type":"pipeline"
         },
         "pipeline loopi":{
-            "possible_directives":["", "set_directive_pipeline \"bbgemm/loopi\""],
+            "possible_directives":["set_directive_pipeline -off \"bbgemm/loopi\"",
+            "set_directive_pipeline \"bbgemm/loopi\""],
             "function":"bbgemm",
             "label": "loopi",
             "directive_type":"pipeline"
         },
         "pipeline loopk":{
-            "possible_directives":["", "set_directive_pipeline \"bbgemm/loopk\""],
+            "possible_directives":["set_directive_pipeline -off \"bbgemm/loopk\"",
+            "set_directive_pipeline \"bbgemm/loopk\""],
             "function":"bbgemm",
             "label": "loopk",
             "directive_type":"pipeline"
         },
         "pipeline loopj":{
-            "possible_directives":["", "set_directive_pipeline \"bbgemm/loopj\""],
+            "possible_directives":["set_directive_pipeline -off \"bbgemm/loopj\"",
+            "set_directive_pipeline \"bbgemm/loopj\""],
             "function":"bbgemm",
             "label": "loopj",
             "directive_type":"pipeline"
