@@ -133,67 +133,78 @@
             "directive_type":"unroll"
         },
         "pipeline loop1":{
-            "possible_directives":["", "set_directive_pipeline \"fft1D_512/loop1\""],
+            "possible_directives":["set_directive_pipeline -off \"fft1D_512/loop1\"",
+            "set_directive_pipeline \"fft1D_512/loop1\""],
             "function":"fft1D_512",
             "label": "loop1",
             "directive_type":"pipeline"
         },
         "pipeline loop2":{
-            "possible_directives":["", "set_directive_pipeline \"fft1D_512/loop2\""],
+            "possible_directives":["set_directive_pipeline -off \"fft1D_512/loop2\"",
+            "set_directive_pipeline \"fft1D_512/loop2\""],
             "function":"fft1D_512",
             "label": "loop2",
             "directive_type":"pipeline"
         },
         "pipeline loop3":{
-            "possible_directives":["", "set_directive_pipeline \"fft1D_512/loop3\""],
+            "possible_directives":["set_directive_pipeline -off \"fft1D_512/loop3\"",
+            "set_directive_pipeline \"fft1D_512/loop3\""],
             "function":"fft1D_512",
             "label": "loop3",
             "directive_type":"pipeline"
         },
         "pipeline loop4":{
-            "possible_directives":["", "set_directive_pipeline \"fft1D_512/loop4\""],
+            "possible_directives":["set_directive_pipeline -off \"fft1D_512/loop4\"",
+            "set_directive_pipeline \"fft1D_512/loop4\""],
             "function":"fft1D_512",
             "label": "loop4",
             "directive_type":"pipeline"
         },
         "pipeline loop5":{
-            "possible_directives":["", "set_directive_pipeline \"fft1D_512/loop5\""],
+            "possible_directives":["set_directive_pipeline -off \"fft1D_512/loop5\"",
+            "set_directive_pipeline \"fft1D_512/loop5\""],
             "function":"fft1D_512",
             "label": "loop5",
             "directive_type":"pipeline"
         },
         "pipeline loop6":{
-            "possible_directives":["", "set_directive_pipeline \"fft1D_512/loop6\""],
+            "possible_directives":["set_directive_pipeline -off \"fft1D_512/loop6\"",
+            "set_directive_pipeline \"fft1D_512/loop6\""],
             "function":"fft1D_512",
             "label": "loop6",
             "directive_type":"pipeline"
         },
         "pipeline loop7":{
-            "possible_directives":["", "set_directive_pipeline \"fft1D_512/loop7\""],
+            "possible_directives":["set_directive_pipeline -off \"fft1D_512/loop7\"",
+            "set_directive_pipeline \"fft1D_512/loop7\""],
             "function":"fft1D_512",
             "label": "loop7",
             "directive_type":"pipeline"
         },
         "pipeline loop8":{
-            "possible_directives":["", "set_directive_pipeline \"fft1D_512/loop8\""],
+            "possible_directives":["set_directive_pipeline -off \"fft1D_512/loop8\"",
+            "set_directive_pipeline \"fft1D_512/loop8\""],
             "function":"fft1D_512",
             "label": "loop8",
             "directive_type":"pipeline"
         },
         "pipeline loop9":{
-            "possible_directives":["", "set_directive_pipeline \"fft1D_512/loop9\""],
+            "possible_directives":["set_directive_pipeline -off \"fft1D_512/loop9\"",
+            "set_directive_pipeline \"fft1D_512/loop9\""],
             "function":"fft1D_512",
             "label": "loop9",
             "directive_type":"pipeline"
         },
         "pipeline loop10":{
-            "possible_directives":["",  "set_directive_pipeline \"fft1D_512/loop10\""],
+            "possible_directives":["set_directive_pipeline -off \"fft1D_512/loop10\"",
+            "set_directive_pipeline \"fft1D_512/loop10\""],
             "function":"fft1D_512",
             "label": "loop10",
             "directive_type":"pipeline"
         },
         "pipeline loop11":{
-            "possible_directives":["", "set_directive_pipeline \"fft1D_512/loop11\""],
+            "possible_directives":["set_directive_pipeline -off \"fft1D_512/loop11\"",
+            "set_directive_pipeline \"fft1D_512/loop11\""],
             "function":"fft1D_512",
             "label": "loop11",
             "directive_type":"pipeline"
