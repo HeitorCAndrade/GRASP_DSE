@@ -48,8 +48,13 @@ class RandomSearch(Heuristic):
 
 
     def verify_successful_runs(self, benchName):
+        #INFO: [Common 17-206] Exiting Vivado at
         print(f'verifying successful runs for {benchName}...')
         suc_runs = 0
+        fully_complete = 0
+        rpt_count_power = 0
+        rpt_count_timing = 0
+        rpt_count_area = 0
         if not Path(f'./DATASETS/{benchName}').is_dir():
             print('benchmark directory not found, assuming 0 successful runs...')
             return suc_runs
@@ -61,10 +66,24 @@ class RandomSearch(Heuristic):
                     with open(f'./DATASETS/{benchName}/{dir}/impl/verilog/project.runs/impl_1/runme.log', 'r') as f:
                         lines = f.readlines()
                         for line in lines:
-                            if line.find('report_power completed successfully') != -1:
+                            if line.find('route_design completed successfully') != -1:
                                 suc_runs = suc_runs + 1
+                                if line.find('[Common 17-206] Exiting Vivado at') != -1:
+                                    fully_complete = fully_complete + 1
+                                
+                                if Path(f'./DATASETS/{benchName}/{dir}/impl/verilog/project.runs/impl_1/bd_0_wrapper_utilization_placed.rpt').is_file():
+                                    rpt_count_area = rpt_count_area + 1
+                                if Path(f'./DATASETS/{benchName}/{dir}/impl/verilog/project.runs/impl_1/bd_0_wrapper_power_routed.rpt').is_file():
+                                    rpt_count_power = rpt_count_power + 1
+                                if Path(f'./DATASETS/{benchName}/{dir}/impl/verilog/project.runs/impl_1/bd_0_wrapper_timing_summary_routed.rpt').is_file():
+                                    rpt_count_timing = rpt_count_timing + 1
+                            #if line.find('report_power completed successfully') != -1:
+                            #    rpt_count_power = rpt_count_power + 1
             if suc_runs > 0:
-                print(f'found {suc_runs} successful runs!')
+                print(f'found {suc_runs} successful runs, of which {fully_complete} were fully completed!')
+                print(f'there are {suc_runs-rpt_count_area} successfull runs without the final area report')
+                print(f'there are {suc_runs-rpt_count_power} successfull runs without the final power report')
+                print(f'there are {suc_runs-rpt_count_timing} successfull runs without the final timming report')
             else:
                 print(f'no successful runs found!')
             return suc_runs
