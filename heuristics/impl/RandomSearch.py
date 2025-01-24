@@ -83,7 +83,7 @@ class RandomSearch(Heuristic):
                 print(f'found {suc_runs} successful runs, of which {fully_complete} were fully completed!')
                 print(f'there are {suc_runs-rpt_count_area} successful runs without the final area report')
                 print(f'there are {suc_runs-rpt_count_power} successful runs without the final power report')
-                print(f'there are {suc_runs-rpt_count_timing} successful runs without the final timming report')
+                print(f'there are {suc_runs-rpt_count_timing} successful runs without the final timing report')
             else:
                 print(f'no successful runs found!')
             return suc_runs
