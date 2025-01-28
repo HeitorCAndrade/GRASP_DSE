@@ -45,13 +45,18 @@ class Vitis(DesignTool):
     def check_if_done(self, benchmark, sol_count):
         sol = 'solution'+str(sol_count)
         is_done = False
+        finished_rpts = False
         if Path(f'./DATASETS/{benchmark}/{sol}/impl/verilog/project.runs/impl_1/runme.log').is_file():
             with open(f'./DATASETS/{benchmark}/{sol}/impl/verilog/project.runs/impl_1/runme.log', 'r') as f:
                 lines = f.readlines()
                 for line in lines:
-                    if line.find('report_power completed successfully') != -1:
+                    if line.find('route_design completed successfully') != -1:
                         is_done = True
-        return is_done
+                        if Path(f'./DATASETS/{benchmark}/{sol}/impl/verilog/project.runs/impl_1/bd_0_wrapper_utilization_placed.rpt').is_file():
+                            if Path(f'./DATASETS/{benchmark}/{sol}/impl/verilog/project.runs/impl_1/bd_0_wrapper_power_routed.rpt').is_file():
+                                if Path(f'./DATASETS/{benchmark}/{sol}/impl/verilog/project.runs/impl_1/bd_0_wrapper_timing_summary_routed.rpt').is_file():
+                                    finished_rpts = True
+        return [is_done, finished_rpts]
 
 
     def altRunSynth(self, solution: Solution, timeLimit = None, solutionSaver= None, benchmark = '', sol_count = 1):
@@ -73,7 +78,7 @@ class Vitis(DesignTool):
             os.killpg(os.getpgid(p.pid), signal.SIGKILL)
             print('########################################################')
 
-        is_done = self.check_if_done(benchmark, sol_count)
+        is_done, finished_rpts = self.check_if_done(benchmark, sol_count)
         if is_done:
             print('########################################################')
             print(f'run {sol_count} was successfull!')  
@@ -83,6 +88,7 @@ class Vitis(DesignTool):
 
     def runSynthesis(self, solution: Solution, timeLimit = None, solutionSaver= None, benchmark = '', sol_count = 1):
         is_done = False
+        finished_rpts = False
         #self.__killOnGoingVitisProcessIfAny()    
         #self.__killOnGoingVivadoProcessIfAny() 
         #if not especified, there is infinite time to run synthesis
@@ -101,20 +107,23 @@ class Vitis(DesignTool):
         parent_process = psutil.Process(parent_pid)
         while parent_process.is_running() and parent_process.status() != psutil.STATUS_ZOMBIE:
             time.sleep(60)
-            is_done = self.check_if_done(benchmark, sol_count)
-            if time.time() - start > timeLimit or is_done == True:
+            is_done, finished_rpts = self.check_if_done(benchmark, sol_count)
+            if time.time() - start > timeLimit or finished_rpts == True: 
                 print('########################################################')
-                if is_done:
-                  print(f'run {sol_count} was successfull! Killing processes...')  
+                if finished_rpts:
+                  print(f'run {sol_count} was successful! Killing processes...')  
                 else:
-                    print(f'run {sol_count} exceeded time limit! Killing processes...')
+                    if not is_done:
+                        print(f'run {sol_count} exceeded time limit! Killing processes...')
+                    else:
+                        print(f'run {sol_count} was successful but reports were not generated! Killing processes...')
                 print('########################################################')
                 for p in parent_process.children(recursive=True):
                     p.kill()
                 parent_process.kill()
                 print('finished killing processes')
 
-        is_done = self.check_if_done(benchmark, sol_count) #last check
+        is_done, finished_rpts = self.check_if_done(benchmark, sol_count) #last check
         return is_done
 
     def __writeDirectivesIntoFile(self,directives):
