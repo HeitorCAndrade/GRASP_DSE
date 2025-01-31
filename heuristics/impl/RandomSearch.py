@@ -167,7 +167,7 @@ class RandomSearch(Heuristic):
         filtered_dirs = os.listdir(path=f'./DATASETS/filtered/{benchName}')
         for sol in filtered_dirs:
             total_runs = total_runs + 1
-            if not Path(f'/DATASETS/filtered/{benchName}/{sol}/reports/impl_power.rpt').is_file():
+            if not Path(f'./DATASETS/filtered/{benchName}/{sol}/reports/impl_power.rpt').is_file():
                 missing_power = missing_power + 1
             if not Path(f'./DATASETS/filtered/{benchName}/{sol}/reports/impl_timing_summary.rpt').is_file():
                 print(f'sol: {sol}')
