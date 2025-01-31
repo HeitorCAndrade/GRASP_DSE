@@ -20,6 +20,8 @@ from pathlib import Path
 from domain.solution import Solution
 from utils.Script_tcl import generateScript
 import copy
+import glob
+import shutil
 from random import seed
 from random import randint
 import random
@@ -41,11 +43,149 @@ class RandomSearch(Heuristic):
         seed()
         if self.filesDict['verify']:
             self.verify_successful_runs(self.benchName)
+        elif self.filesDict['filter']:
+            self.filter_dataset(self.benchName)
         else:
             self.run()
     def setTimeLimit(self,seconds):
         self._SECONDS = seconds
 
+    def copy_prj_files(self, benchName, sol):
+        from_dir = f'./DATASETS/{benchName}/{sol}/'
+        to_dir = f'./DATASETS/filtered/{benchName}/{sol}/'
+
+        warn_missing = False
+
+        if not Path(f'{to_dir}').is_dir():
+            Path(f'{to_dir}').mkdir()
+
+        f = open(to_dir+'__MISSING_FILES__', 'w')
+
+        #IRs:
+        Path(to_dir+'IRs').mkdir()
+        for file in glob.glob(os.path.join(from_dir+'.autopilot/db/',"*.bc")):
+            shutil.copy2(file, to_dir+'IRs/')
+        #TODO: copiar o outro IR -> falar com Gabriel
+
+        #directives
+        try:
+            shutil.copyfile(from_dir+f'{sol}.directive', to_dir+f'{sol}.directive')
+        except FileNotFoundError:
+            f.write('missing directive file\n')
+            warn_missing = True
+
+        try:
+            shutil.copyfile(from_dir+f'{sol}_data.json', to_dir+f'{sol}_data.json')
+        except FileNotFoundError:
+            f.write('missing json directive file\n')
+            warn_missing = True
+
+        #reports
+        Path(to_dir+'reports').mkdir()
+        try: 
+            shutil.copyfile(from_dir+'syn/report/csynth.rpt', to_dir+'reports/csynth.rpt')
+        except FileNotFoundError:
+            f.write('missing csynth rpt\n')
+            warn_missing = True
+        try:
+            shutil.copyfile(from_dir+'syn/report/csynth.xml', to_dir+'reports/csynth.xml')
+        except FileNotFoundError:
+            f.write('missing csynth xml\n')
+            warn_missing = True
+
+        try:
+            shutil.copyfile(from_dir+'impl/report/verilog/export_syn.rpt', to_dir+'reports/export_syn.rpt')
+            shutil.copyfile(from_dir+'impl/report/verilog/export_syn.xml', to_dir+'reports/export_syn.xml')
+        except FileNotFoundError:
+            f.write('missing export synth files\n')
+            warn_missing = True
+
+        try:
+            shutil.copyfile(from_dir+'impl/report/verilog/export_impl.rpt', to_dir+'reports/export_impl.rpt')
+            shutil.copyfile(from_dir+'impl/report/verilog/export_impl.xml', to_dir+'reports/export_impl.xml')
+        except FileNotFoundError:
+            f.write('missing export impl files\n')
+            warn_missing = True
+
+        try:
+            shutil.copyfile(from_dir+'impl/verilog/project.runs/impl_1/bd_0_wrapper_power_routed.rpt', to_dir+'reports/impl_power.rpt')
+            shutil.copyfile(from_dir+'impl/verilog/project.runs/impl_1/bd_0_wrapper_timing_summary_routed.rpt', to_dir+'reports/impl_timing_summary.rpt')
+            shutil.copyfile(from_dir+'impl/verilog/project.runs/impl_1/bd_0_wrapper_utilization_placed.rpt', to_dir+'reports/impl_utilization_placed.rpt')
+        except FileNotFoundError:
+            f.write('missing project implementation reports\n')
+            warn_missing = True
+
+        try:
+            shutil.copyfile(from_dir+'impl/verilog/project.runs/impl_1/runme.log', to_dir+'reports/impl_runme.log')
+        except FileNotFoundError:
+            f.write('missing implementation log\n')
+            warn_missing = True
+        try:
+            shutil.copyfile(from_dir+'impl/verilog/project.runs/synth_1/runme.log', to_dir+'reports/synth_runme.log')
+        except FileNotFoundError:
+            f.write('missing logic synthesis log\n')
+            warn_missing = True
+
+        #miscellaneous files 
+        try:
+            shutil.copyfile(from_dir+'impl/export.dcp', to_dir+'export.dcp')
+        except FileNotFoundError:
+            f.write('missing design checkpoint (.dcp)\n')
+            warn_missing = True
+
+
+        f.close()
+        if not warn_missing:
+            Path(to_dir+'__MISSING_FILES__').unlink()
+
+    def filter_dataset(self, benchName):
+        total_runs = 0
+        missing_timing = 0
+        missing_area = 0
+        missing_power = 0
+        missing_directives = 0
+        missing_directives_j = 0
+
+        filtered_dir_ok = True
+        directories = os.listdir(path=f'./DATASETS/{benchName}')
+        try:
+            Path(f'./DATASETS/filtered/{benchName}').mkdir(parents=True)
+        except FileExistsError:
+            print('dataset directory already exists. Continuing...')
+        else:
+            print('filtered directory created!')
+
+        for dir in directories:
+                if Path(f'./DATASETS/{benchName}/{dir}/impl/verilog/project.runs/impl_1/runme.log').is_file():
+                    with open(f'./DATASETS/{benchName}/{dir}/impl/verilog/project.runs/impl_1/runme.log', 'r') as f:
+                        lines = f.readlines()
+                        for line in lines:
+                            if line.find('route_design completed successfully') != -1:
+                                if filtered_dir_ok:
+                                    self.copy_prj_files(benchName, dir)
+
+        filtered_dirs = os.listdir(path=f'./DATASETS/filtered/{benchName}')
+        for sol in filtered_dirs:
+            total_runs = total_runs + 1
+            if not Path(f'/DATASETS/filtered/{benchName}/{sol}/reports/impl_power.rpt').is_file():
+                missing_power = missing_power + 1
+            if not Path(f'./DATASETS/filtered/{benchName}/{sol}/reports/impl_timing_summary.rpt').is_file():
+                print(f'sol: {sol}')
+                missing_timing = missing_timing + 1
+            if not Path(f'./DATASETS/filtered/{benchName}/{sol}/reports/impl_utilization_placed.rpt').is_file():
+                missing_area = missing_area + 1
+            if not Path(f'./DATASETS/filtered/{benchName}/{sol}/{sol}.directive').is_file():
+                missing_directives = missing_directives + 1
+            if not Path(f'./DATASETS/filtered/{benchName}/{sol}/{sol}_data.json').is_file():
+                missing_directives_j = missing_directives_j + 1
+
+        print(f'finish filtering dataset {benchName}')
+        print(f'out of {total_runs} runs...')
+        print(f'there are {missing_power} instances with missing power report')
+        print(f'there are {missing_timing} instances with missing timing report')
+        print(f'there are {missing_area} instances with missing area report')
+        print(f'there are {missing_directives} instances with missing directive run file')
+        print(f'there are {missing_directives_j} instances with missing directive json file\n')
 
     def verify_successful_runs(self, benchName):
         #INFO: [Common 17-206] Exiting Vivado at
