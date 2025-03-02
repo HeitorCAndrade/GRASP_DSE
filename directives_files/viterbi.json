@@ -1,0 +1,293 @@
+{
+    "directives":
+    {
+        "unroll L_init": {
+            "possible_directives": ["",
+            "set_directive_unroll -factor 2 \"viterbi/L_init\"",
+            "set_directive_unroll -factor 4 \"viterbi/L_init\"",
+            "set_directive_unroll -factor 8 \"viterbi/L_init\"",
+            "set_directive_unroll -factor 16 \"viterbi/L_init\"",
+            "set_directive_unroll -factor 32 \"viterbi/L_init\""],
+            "function": "viterbi",
+            "label": "L_init",
+            "directive_type":"unroll"
+        },
+
+        "pipeline L_init": {
+                "possible_directives":["set_directive_pipeline -off \"viterbi/L_init\"",
+                "set_directive_pipeline \"viterbi/L_init\""],
+                "function":"viterbi",
+                "label": "L_init",
+                "directive_type":"pipeline"
+            },
+
+        "unroll L_timestep": {
+            "possible_directives": ["",
+            "set_directive_unroll -factor 2 \"viterbi/L_timestep\"",
+            "set_directive_unroll -factor 4 \"viterbi/L_timestep\"",
+            "set_directive_unroll -factor 5 \"viterbi/L_timestep\"",
+            "set_directive_unroll -factor 7 \"viterbi/L_timestep\"",
+            "set_directive_unroll -factor 10 \"viterbi/L_timestep\"",
+            "set_directive_unroll -factor 14 \"viterbi/L_timestep\"",
+            "set_directive_unroll -factor 20 \"viterbi/L_timestep\""],
+            "function": "viterbi",
+            "label": "L_timestep",
+            "directive_type":"unroll"
+        },
+
+        "pipeline L_timestep": {
+                "possible_directives":["set_directive_pipeline -off \"viterbi/L_timestep\"",
+                "set_directive_pipeline \"viterbi/L_timestep\""],
+                "function":"viterbi",
+                "label": "L_timestep",
+                "directive_type":"pipeline"
+        },
+
+        "unroll L_curr_state": {
+            "possible_directives": ["",
+            "set_directive_unroll -factor 2 \"viterbi/L_curr_state\"",
+            "set_directive_unroll -factor 4 \"viterbi/L_curr_state\"",
+            "set_directive_unroll -factor 8 \"viterbi/L_curr_state\"",
+            "set_directive_unroll -factor 16 \"viterbi/L_curr_state\"",
+            "set_directive_unroll -factor 32 \"viterbi/L_curr_state\""],
+            "function": "viterbi",
+            "label": "L_curr_state",
+            "directive_type":"unroll"
+        },
+
+        "pipeline L_curr_state": {
+                "possible_directives":["set_directive_pipeline -off \"viterbi/L_curr_state\"",
+                "set_directive_pipeline \"viterbi/L_curr_state\""],
+                "function":"viterbi",
+                "label": "L_curr_state",
+                "directive_type":"pipeline"
+        },
+
+        "unroll L_prev_state": {
+            "possible_directives": ["",
+            "set_directive_unroll -factor 2 \"viterbi/L_prev_state\"",
+            "set_directive_unroll -factor 4 \"viterbi/L_prev_state\"",
+            "set_directive_unroll -factor 8 \"viterbi/L_prev_state\"",
+            "set_directive_unroll -factor 16 \"viterbi/L_prev_state\"",
+            "set_directive_unroll -factor 32 \"viterbi/L_prev_state\""],
+            "function": "viterbi",
+            "label": "L_prev_state",
+            "directive_type":"unroll"
+        },
+
+        "pipeline L_prev_state": {
+                "possible_directives":["set_directive_pipeline -off \"viterbi/L_prev_state\"",
+                "set_directive_pipeline \"viterbi/L_prev_state\""],
+                "function":"viterbi",
+                "label": "L_prev_state",
+                "directive_type":"pipeline"
+        },
+
+        "unroll L_end": {
+            "possible_directives": ["",
+            "set_directive_unroll -factor 2 \"viterbi/L_end\"",
+            "set_directive_unroll -factor 4 \"viterbi/L_end\"",
+            "set_directive_unroll -factor 8 \"viterbi/L_end\"",
+            "set_directive_unroll -factor 16 \"viterbi/L_end\"",
+            "set_directive_unroll -factor 32 \"viterbi/L_end\""],
+            "function": "viterbi",
+            "label": "L_end",
+            "directive_type":"unroll"
+        },
+
+        "pipeline L_end": {
+                "possible_directives":["set_directive_pipeline -off \"viterbi/L_end\"",
+                "set_directive_pipeline \"viterbi/L_end\""],
+                "function":"viterbi",
+                "label": "L_end",
+                "directive_type":"pipeline"
+        },
+
+        "unroll L_backtrack": {
+            "possible_directives": ["",
+            "set_directive_unroll -factor 2 \"viterbi/L_backtrack\"",
+            "set_directive_unroll -factor 4 \"viterbi/L_backtrack\"",
+            "set_directive_unroll -factor 5 \"viterbi/L_backtrack\"",
+            "set_directive_unroll -factor 7 \"viterbi/L_backtrack\"",
+            "set_directive_unroll -factor 10 \"viterbi/L_backtrack\"",
+            "set_directive_unroll -factor 14 \"viterbi/L_backtrack\"",
+            "set_directive_unroll -factor 20 \"viterbi/L_backtrack\""],
+            "function": "viterbi",
+            "label": "L_backtrack",
+            "directive_type":"unroll"
+        },
+
+        "pipeline L_backtrack": {
+                "possible_directives":["set_directive_pipeline -off \"viterbi/L_backtrack\"",
+                "set_directive_pipeline \"viterbi/L_backtrack\""],
+                "function":"viterbi",
+                "label": "L_backtrack",
+                "directive_type":"pipeline"
+        },
+
+        "unroll L_state": {
+            "possible_directives": ["",
+            "set_directive_unroll -factor 2 \"viterbi/L_state\"",
+            "set_directive_unroll -factor 4 \"viterbi/L_state\"",
+            "set_directive_unroll -factor 8 \"viterbi/L_state\"",
+            "set_directive_unroll -factor 16 \"viterbi/L_state\"",
+            "set_directive_unroll -factor 32 \"viterbi/L_state\""],
+            "function": "viterbi",
+            "label": "L_state",
+            "directive_type":"unroll"
+        },
+
+        "pipeline L_state": {
+                "possible_directives":["set_directive_pipeline -off \"viterbi/L_state\"",
+                "set_directive_pipeline \"viterbi/L_state\""],
+                "function":"viterbi",
+                "label": "L_state",
+                "directive_type":"pipeline"
+        },
+
+        "loop_flatten L_curr_state": {
+                "possible_directives":["","set_directive_loop_flatten \"viterbi/L_curr_state\""],
+                "function":"viterbi",
+                "label": "L_curr_state",
+                "directive_type":"loop_flatten"
+            },
+
+        "array_partition viterbi obs": {
+                "possible_directives":["",
+                    "set_directive_array_partition -type block -factor 2 -dim 0 \"viterbi\" obs",
+                    "set_directive_array_partition -type block -factor 4 -dim 0 \"viterbi\" obs",
+                    "set_directive_array_partition -type block -factor 5 -dim 0 \"viterbi\" obs",
+                    "set_directive_array_partition -type block -factor 7 -dim 0 \"viterbi\" obs",
+                    "set_directive_array_partition -type block -factor 10 -dim 0 \"viterbi\" obs",
+                    "set_directive_array_partition -type block -factor 14 -dim 0 \"viterbi\" obs",
+                    "set_directive_array_partition -type cyclic -factor 2 -dim 0 \"viterbi\" obs",
+                    "set_directive_array_partition -type cyclic -factor 4 -dim 0 \"viterbi\" obs",
+                    "set_directive_array_partition -type cyclic -factor 5 -dim 0 \"viterbi\" obs",
+                    "set_directive_array_partition -type cyclic -factor 7 -dim 0 \"viterbi\" obs",
+                    "set_directive_array_partition -type cyclic -factor 10 -dim 0 \"viterbi\" obs",
+                    "set_directive_array_partition -type cyclic -factor 14 -dim 0 \"viterbi\" obs"],
+                "function":"viterbi",
+                "label": "",
+                "variable": "obs",
+                "directive_type":"array_partition"
+        },
+
+        "array_partition viterbi init": {
+                "possible_directives":["",
+                    "set_directive_array_partition -type block -factor 2 -dim 0 \"viterbi\" init",
+                    "set_directive_array_partition -type block -factor 4 -dim 0 \"viterbi\" init",
+                    "set_directive_array_partition -type block -factor 8 -dim 0 \"viterbi\" init",
+                    "set_directive_array_partition -type block -factor 16 -dim 0 \"viterbi\" init",
+                    "set_directive_array_partition -type block -factor 32 -dim 0 \"viterbi\" init",
+                    "set_directive_array_partition -type cyclic -factor 2 -dim 0 \"viterbi\" init",
+                    "set_directive_array_partition -type cyclic -factor 4 -dim 0 \"viterbi\" init",
+                    "set_directive_array_partition -type cyclic -factor 8 -dim 0 \"viterbi\" init",
+                    "set_directive_array_partition -type cyclic -factor 16 -dim 0 \"viterbi\" init",
+                    "set_directive_array_partition -type cyclic -factor 32 -dim 0 \"viterbi\" init"],
+                "function":"viterbi",
+                "label": "",
+                "variable": "init",
+                "directive_type":"array_partition"
+        },
+
+        "array_partition viterbi transition": {
+                "possible_directives":["",
+                    "set_directive_array_partition -type block -factor 2 -dim 0 \"viterbi\" transition",
+                    "set_directive_array_partition -type block -factor 4 -dim 0 \"viterbi\" transition",
+                    "set_directive_array_partition -type block -factor 8 -dim 0 \"viterbi\" transition",
+                    "set_directive_array_partition -type block -factor 16 -dim 0 \"viterbi\" transition",
+                    "set_directive_array_partition -type block -factor 32 -dim 0 \"viterbi\" transition",
+                    "set_directive_array_partition -type cyclic -factor 2 -dim 0 \"viterbi\" transition",
+                    "set_directive_array_partition -type cyclic -factor 4 -dim 0 \"viterbi\" transition",
+                    "set_directive_array_partition -type cyclic -factor 8 -dim 0 \"viterbi\" transition",
+                    "set_directive_array_partition -type cyclic -factor 16 -dim 0 \"viterbi\" transition",
+                    "set_directive_array_partition -type cyclic -factor 32 -dim 0 \"viterbi\" transition"],
+                "function":"viterbi",
+                "label": "",
+                "variable": "transition",
+                "directive_type":"array_partition"
+         },
+
+        "array_partition viterbi emission": {
+                "possible_directives":["",
+                    "set_directive_array_partition -type block -factor 2 -dim 0 \"viterbi\" emission",
+                    "set_directive_array_partition -type block -factor 4 -dim 0 \"viterbi\" emission",
+                    "set_directive_array_partition -type block -factor 8 -dim 0 \"viterbi\" emission",
+                    "set_directive_array_partition -type block -factor 16 -dim 0 \"viterbi\" emission",
+                    "set_directive_array_partition -type block -factor 32 -dim 0 \"viterbi\" emission",
+                    "set_directive_array_partition -type cyclic -factor 2 -dim 0 \"viterbi\" emission",
+                    "set_directive_array_partition -type cyclic -factor 4 -dim 0 \"viterbi\" emission",
+                    "set_directive_array_partition -type cyclic -factor 8 -dim 0 \"viterbi\" emission",
+                    "set_directive_array_partition -type cyclic -factor 16 -dim 0 \"viterbi\" emission",
+                    "set_directive_array_partition -type cyclic -factor 32 -dim 0 \"viterbi\" emission"],
+                "function":"viterbi",
+                "label": "",
+                "variable": "emission",
+                "directive_type":"array_partition"
+        },
+
+        "array_partition viterbi path": {
+                "possible_directives":["",
+                    "set_directive_array_partition -type block -factor 2 -dim 0 \"viterbi\" path",
+                    "set_directive_array_partition -type block -factor 4 -dim 0 \"viterbi\" path",
+                    "set_directive_array_partition -type block -factor 5 -dim 0 \"viterbi\" path",
+                    "set_directive_array_partition -type block -factor 7 -dim 0 \"viterbi\" path",
+                    "set_directive_array_partition -type block -factor 10 -dim 0 \"viterbi\" path",
+                    "set_directive_array_partition -type block -factor 14 -dim 0 \"viterbi\" path",
+                    "set_directive_array_partition -type cyclic -factor 2 -dim 0 \"viterbi\" path",
+                    "set_directive_array_partition -type cyclic -factor 4 -dim 0 \"viterbi\" path",
+                    "set_directive_array_partition -type cyclic -factor 5 -dim 0 \"viterbi\" path",
+                    "set_directive_array_partition -type cyclic -factor 7 -dim 0 \"viterbi\" path",
+                    "set_directive_array_partition -type cyclic -factor 10 -dim 0 \"viterbi\" path",
+                    "set_directive_array_partition -type cyclic -factor 14 -dim 0 \"viterbi\" path"],
+                "function":"viterbi",
+                "label": "",
+                "variable": "path",
+                "directive_type":"array_partition"
+        },
+
+        "array_partition viterbi llike": {
+                "possible_directives":["",
+                    "set_directive_array_partition -type block -factor 2 -dim 0 \"viterbi\" llike",
+                    "set_directive_array_partition -type block -factor 4 -dim 0 \"viterbi\" llike",
+                    "set_directive_array_partition -type block -factor 5 -dim 0 \"viterbi\" llike",
+                    "set_directive_array_partition -type block -factor 7 -dim 0 \"viterbi\" llike",
+                    "set_directive_array_partition -type block -factor 10 -dim 0 \"viterbi\" llike",
+                    "set_directive_array_partition -type block -factor 14 -dim 0 \"viterbi\" llike",
+                    "set_directive_array_partition -type cyclic -factor 2 -dim 0 \"viterbi\" llike",
+                    "set_directive_array_partition -type cyclic -factor 4 -dim 0 \"viterbi\" llike",
+                    "set_directive_array_partition -type cyclic -factor 5 -dim 0 \"viterbi\" llike",
+                    "set_directive_array_partition -type cyclic -factor 7 -dim 0 \"viterbi\" llike",
+                    "set_directive_array_partition -type cyclic -factor 10 -dim 0 \"viterbi\" llike",
+                    "set_directive_array_partition -type cyclic -factor 14 -dim 0 \"viterbi\" llike"],
+                "function":"viterbi",
+                "label": "",
+                "variable": "llike",
+                "directive_type":"array_partition"
+        }
+    },
+    "nested_loops": [
+        {
+            "function":"viterbi",
+            "label":"L_timestep",
+            "nest": {
+                "function":"viterbi",
+                "label":"L_curr_state",
+                "nest": {
+                    "function":"viterbi",
+                "label":"L_prev_state",
+                "nest": {}
+                }
+            }
+        },
+        {
+            "function":"viterbi",
+            "label":"L_backtrack",
+            "nest": {
+                "function":"viterbi",
+                "label":"L_state",
+                "nest": {}
+            }
+        }
+    ]
+}
