@@ -43,6 +43,8 @@ if __name__ == "__main__":
     parser.add_argument("-v", "--verify", help = "verify number of valid runs from guiven benchmark",required=False, nargs='?', const=1)
     parser.add_argument("-bi", "--base_instances", help = "build the base instances before instances generation",required=False, nargs='?', const=1)
     parser.add_argument("-f", "--filter", help = "filter the specified dataset, leaving only the reports,dcp files and directives on a new directory",required=False, nargs='?', const=1)
+    parser.add_argument("-rpts", "--reports", help = "generate missing reports on the benchmark's instances that were succesful [WORK IN PROGRESS]",required=False, nargs='?', const=1)
+    parser.add_argument("-cc", "--clean", help = "remove files from benchmark runs, leaving only IRs, reports and files from vivado project [WORK IN PROGRESS]",required=False, nargs='?', const=1)
 
     filesDict = {}
     # Read arguments from command line
@@ -84,6 +86,16 @@ if __name__ == "__main__":
         filesDict['filter'] = True
     else:
         filesDict['filter'] = False
+
+    if args.reports is not None:
+        filesDict['reports'] = True
+    else:
+        filesDict['reports'] = False
+
+    if args.clean is not None:
+        filesDict['clean'] = True
+    else:
+        filesDict['clean'] = False
     
     # hour = 3600
     # RESOURCE_TO_COMPARE = 'resources'

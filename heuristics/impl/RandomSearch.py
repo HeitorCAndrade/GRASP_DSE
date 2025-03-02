@@ -19,6 +19,8 @@ from heuristics.heuristic import Heuristic
 from pathlib import Path
 from domain.solution import Solution
 from utils.Script_tcl import generateScript
+from utils.Script_tcl import generateReportScript
+import subprocess
 import copy
 import glob
 import shutil
@@ -42,9 +44,14 @@ class RandomSearch(Heuristic):
         self._SECONDS = timeLimit
         seed()
         if self.filesDict['verify']:
-            self.verify_successful_runs(self.benchName)
+            if self.filesDict['reports']:
+                self.verify_successful_runs(self.benchName, True)
+            else:
+                self.verify_successful_runs(self.benchName)
         elif self.filesDict['filter']:
             self.filter_dataset(self.benchName)
+        elif self.filesDict['clean']:
+            self.remove_unwanted_files(self.benchName)
         else:
             self.run()
     def setTimeLimit(self,seconds):
@@ -62,7 +69,7 @@ class RandomSearch(Heuristic):
         f = open(to_dir+'__MISSING_FILES__', 'w')
 
         #IRs:
-        Path(to_dir+'IRs').mkdir()
+        Path(to_dir+'IRs').mkdir(exist_ok=True)
         for file in glob.glob(os.path.join(from_dir+'.autopilot/db/',"*.bc")):
             shutil.copy2(file, to_dir+'IRs/')
         #TODO: copiar o outro IR -> falar com Gabriel
@@ -81,7 +88,7 @@ class RandomSearch(Heuristic):
             warn_missing = True
 
         #reports
-        Path(to_dir+'reports').mkdir()
+        Path(to_dir+'reports').mkdir(exist_ok=True)
         try: 
             shutil.copyfile(from_dir+'syn/report/csynth.rpt', to_dir+'reports/csynth.rpt')
         except FileNotFoundError:
@@ -138,6 +145,29 @@ class RandomSearch(Heuristic):
         if not warn_missing:
             Path(to_dir+'__MISSING_FILES__').unlink()
 
+    def remove_unwanted_files(self, bench):
+        #in .autopilot directory, remove yml, xml, txt, v, vhd, wcfg, c, cpp, log, tcl, rpt, adb -> alternatively, preserve bc, ll, json files
+        #in impl, remove rtd, vhdl directory
+        if Path(f'./DATASETS/{bench}').is_dir():
+            directories = os.listdir(path=f'./DATASETS/{bench}')
+            for dir in directories:
+                if Path(f'./DATASETS/{bench}/{dir}').is_dir():
+                    for auto in os.listdir(path=f'./DATASETS/{bench}/{dir}/.autopilot'):
+                        if (not auto.endswith('.bc')) and (not auto.endswith('.ll')) and (not auto.endswith('.json')):
+                            os.remove(os.path.join(f'./DATASETS/{bench}/{dir}/.autopilot/', auto))
+
+                    shutil.rmtree(f'./DATASETS/{bench}/{dir}/syn/vhdl')
+
+                    shutil.rmtree(f'./DATASETS/{bench}/{dir}/impl/vhdl')
+                    for root, dirs, files in os.walk(f'./DATASETS/{bench}/{dir}/impl/verilog', topdown=True):
+                        for dir in dirs:
+                            if dir == 'vhdl':
+                                os.remove(os.path.join(root), dir)
+                        for f in files:
+                            if (not f.endswith('.v')) and (not f.endswith('.tcl')) and (not f.endswith('.xpr')) and (not f.endswith('.rpt')) and (not f.endswith('.xml')) and (not f.endswith('.log')) and (not f.endswith('.xdc')):
+                                os.remove(os.path.join(root), f)
+
+
     def filter_dataset(self, benchName):
         total_runs = 0
         missing_timing = 0
@@ -187,7 +217,12 @@ class RandomSearch(Heuristic):
         print(f'there are {missing_directives} instances with missing directive run file')
         print(f'there are {missing_directives_j} instances with missing directive json file\n')
 
-    def verify_successful_runs(self, benchName):
+
+    def generate_missing_reports(self, benchName, dir, area, power, timing):
+        generateReportScript(benchName, dir, area, power, timing)
+        subprocess.run('vivado -script ./domain/generate_report.tcl', shell=True)
+
+    def verify_successful_runs(self, benchName, gen_rpts = False):
         #INFO: [Common 17-206] Exiting Vivado at
         print(f'verifying successful runs for {benchName}...')
         suc_runs = 0
@@ -195,6 +230,10 @@ class RandomSearch(Heuristic):
         rpt_count_power = 0
         rpt_count_timing = 0
         rpt_count_area = 0
+        failed_timing = 0
+        gen_area = False
+        gen_power = False
+        gen_timing = False
         if not Path(f'./DATASETS/{benchName}').is_dir():
             print('benchmark directory not found, assuming 0 successful runs...')
             return suc_runs
@@ -208,22 +247,39 @@ class RandomSearch(Heuristic):
                         for line in lines:
                             if line.find('route_design completed successfully') != -1:
                                 suc_runs = suc_runs + 1
+                                if line.find('CRITICAL WARNING: [Timing 38-282] The design failed to meet the timing requirements') != -1:
+                                    failed_timing = failed_timing + 1
                                 if line.find('[Common 17-206] Exiting Vivado at') != -1:
                                     fully_complete = fully_complete + 1
-                                
                                 if Path(f'./DATASETS/{benchName}/{dir}/impl/verilog/project.runs/impl_1/bd_0_wrapper_utilization_placed.rpt').is_file():
                                     rpt_count_area = rpt_count_area + 1
+                                else:
+                                    gen_area = True
                                 if Path(f'./DATASETS/{benchName}/{dir}/impl/verilog/project.runs/impl_1/bd_0_wrapper_power_routed.rpt').is_file():
                                     rpt_count_power = rpt_count_power + 1
+                                else:
+                                    gen_power = True
                                 if Path(f'./DATASETS/{benchName}/{dir}/impl/verilog/project.runs/impl_1/bd_0_wrapper_timing_summary_routed.rpt').is_file():
                                     rpt_count_timing = rpt_count_timing + 1
-                            #if line.find('report_power completed successfully') != -1:
-                            #    rpt_count_power = rpt_count_power + 1
+                                else:
+                                    gen_timing = True
+                                if (gen_area or gen_power or gen_timing) == True:
+                                    print(f'missing reports for {benchName}/{dir}!')
+                                if (gen_area or gen_power or gen_timing) == True and gen_rpts:
+                                    print(f'generating missing reports for {benchName}/{dir}...')
+                                    self.generate_missing_reports(benchName, dir, gen_area, gen_power, gen_timing)
+                                    print('done!\n')
+                            
+                gen_area = False
+                gen_power = False
+                gen_timing = False
+
             if suc_runs > 0:
                 print(f'found {suc_runs} successful runs, of which {fully_complete} were fully completed!')
                 print(f'there are {suc_runs-rpt_count_area} successful runs without the final area report')
                 print(f'there are {suc_runs-rpt_count_power} successful runs without the final power report')
                 print(f'there are {suc_runs-rpt_count_timing} successful runs without the final timing report')
+                print(f'there are {failed_timing} successful runs with failed timing!')
             else:
                 print(f'no successful runs found!')
             return suc_runs

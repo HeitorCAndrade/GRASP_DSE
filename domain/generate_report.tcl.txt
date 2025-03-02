@@ -1,0 +1,6 @@
+
+open_project $project
+
+route_design
+
+exit
