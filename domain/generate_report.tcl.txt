@@ -1,6 +1,12 @@
 
-open_project $project
+open_project ./DATASETS/$benchmark/$solution/impl/verilog/project.xpr
 
-route_design
+read_checkpoint ./DATASETS/$benchmark/$solution/impl/verilog/project.runs/impl_1/bd_0_wrapper_physopt.dcp
+
+reset_runs impl_1 -prev_step
+
+launch_runs impl_1
+
+wait_on_runs impl_1
 
 exit

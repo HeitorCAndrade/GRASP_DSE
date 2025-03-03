@@ -39,10 +39,8 @@ def generateReportScript(benchname, sol, area, power, timing):
           report_timing_command = f'report_timing_summary -f ./DATASETS/{benchname}/{sol}/impl/verilog/project.runs/impl/generated_timing_sum.rpt'
 
      subtituicoes = {
-     'project': f'./DATASETS/{benchname}/{sol}/impl/verilog/project.xpr',
-     'generate_area': report_area_command,
-     'generate_power': report_power_command,
-     'generate_timing': report_timing_command
+     'benchmark': f'{benchname}',
+     'solution': f'{sol}'
      }
 
      with open('./domain/generate_report.tcl.txt', 'r') as f:
