@@ -220,7 +220,7 @@ class RandomSearch(Heuristic):
 
     def generate_missing_reports(self, benchName, dir, area, power, timing):
         generateReportScript(benchName, dir, area, power, timing)
-        subprocess.run('vivado -script ./domain/generate_report.tcl', shell=True)
+        subprocess.run('vivado -mode tcl -script ./domain/generate_report.tcl', shell=True)
 
     def verify_successful_runs(self, benchName, gen_rpts = False):
         #INFO: [Common 17-206] Exiting Vivado at
