@@ -151,21 +151,42 @@ class RandomSearch(Heuristic):
         if Path(f'./DATASETS/{bench}').is_dir():
             directories = os.listdir(path=f'./DATASETS/{bench}')
             for dir in directories:
+                print(f'processing {dir}...')
                 if Path(f'./DATASETS/{bench}/{dir}').is_dir():
-                    for auto in os.listdir(path=f'./DATASETS/{bench}/{dir}/.autopilot'):
-                        if (not auto.endswith('.bc')) and (not auto.endswith('.ll')) and (not auto.endswith('.json')):
-                            os.remove(os.path.join(f'./DATASETS/{bench}/{dir}/.autopilot/', auto))
+                    print(f'inside directory .autopilot/db/...')
+                    for auto in os.listdir(path=f'./DATASETS/{bench}/{dir}/.autopilot/db'):
+                        if Path(os.path.join(f'./DATASETS/{bench}/{dir}/.autopilot/db/', auto)).is_file():
+                            if (not auto.endswith('.bc')) and (not auto.endswith('.ll')) and (not auto.endswith('.json')):
+                                os.remove(os.path.join(f'./DATASETS/{bench}/{dir}/.autopilot/db', auto))
+                                print(f'deleting file: {auto}')
+                        else:
+                            shutil.rmtree(os.path.join(f'./DATASETS/{bench}/{dir}/.autopilot/db', auto))
+                            print(f'deleting directory: {auto}')
+                        
+                    try:
+                        print('deleting directory /syn/vhdl')
+                        shutil.rmtree(f'./DATASETS/{bench}/{dir}/syn/vhdl')
+                    except FileNotFoundError:
+                        print('/syn/vhdl directory not found')
 
-                    shutil.rmtree(f'./DATASETS/{bench}/{dir}/syn/vhdl')
-
-                    shutil.rmtree(f'./DATASETS/{bench}/{dir}/impl/vhdl')
+                    try:
+                        print('deleting directory /impl/vhdl')
+                        shutil.rmtree(f'./DATASETS/{bench}/{dir}/impl/vhdl')
+                    except FileNotFoundError:
+                        print('/impl/vhdl directory not found\n')
+                    print('----------------------------------------------')
+                    print(f'inside directory impl/verilog...')
                     for root, dirs, files in os.walk(f'./DATASETS/{bench}/{dir}/impl/verilog', topdown=True):
                         for dir in dirs:
                             if dir == 'vhdl':
-                                os.remove(os.path.join(root), dir)
+                                print('deleting directory vhdl')
+                                shutil.rmtree(os.path.join(root), dir)
                         for f in files:
                             if (not f.endswith('.v')) and (not f.endswith('.tcl')) and (not f.endswith('.xpr')) and (not f.endswith('.rpt')) and (not f.endswith('.xml')) and (not f.endswith('.log')) and (not f.endswith('.xdc')):
-                                os.remove(os.path.join(root), f)
+                                print(f'deleting file {f} inside {root}')
+                                os.remove(os.path.join(root, f))
+
+                print('##############################################\n')
 
 
     def filter_dataset(self, benchName):
