@@ -11,6 +11,7 @@
     "GEMM": {"cFiles":["./benchmarks/gemm/gemm.c"], "dFile":"./directives_files/gemm.json", "prjFile":"bbgemm"},
     "KNN": {"cFiles":["./benchmarks/knn/md.c"], "dFile":"./directives_files/knn.json", "prjFile":"md_kernel"},
     "VITERBI": {"cFiles":["./benchmarks/viterbi/viterbi.c"], "dFile":"./directives_files/viterbi.json", "prjFile":"viterbi"},
-    "STENCIL3D": {"cFiles":["./benchmarks/stencil3d/stencil.c"], "dFile":"./directives_files/stencil3d.json", "prjFile":"stencil3d"}
+    "STENCIL3D": {"cFiles":["./benchmarks/stencil3d/stencil.c"], "dFile":"./directives_files/stencil3d.json", "prjFile":"stencil3d"},
+    "GRAMSCHMIDT": {"cFiles":["./benchmarks/gramschmidt/gramschmidt.c"], "dFile":"./directives_files/gramschmidt.json", "prjFile":"kernel_gramschmidt"}
 }
 
