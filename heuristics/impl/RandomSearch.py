@@ -56,7 +56,7 @@ class RandomSearch(Heuristic):
         elif self.filesDict['clean']:
             self.remove_unwanted_files(self.benchName)
         elif self.filesDict['paretto_frontier'] != '':
-            self.paretto_frontier(self.benchName, dir)
+            self.paretto_frontier(self.benchName)
             pass
         else:
             self.run()
@@ -66,7 +66,8 @@ class RandomSearch(Heuristic):
         self._SECONDS = seconds
 
 
-    def paretto_frontier(self, bench, dir = './DATASETS/'):
+    def paretto_frontier(self, bench, _dir = 'DATASETS'):
+        cwd = os.getcwd()
         numeric_const_pattern = '[-+]? (?: (?: \d* \. \d+ ) | (?: \d+ \.? ) )(?: [Ee] [+-]? \d+ ) ?'
         rx = re.compile(numeric_const_pattern, re.VERBOSE)
         MAX_LUT = 871680
@@ -75,7 +76,8 @@ class RandomSearch(Heuristic):
         MAX_DSP = 5952
         #return instances that form the paretto frontier for that benchmark
 
-        if not Path(f'{dir}/{bench}').is_dir():
+        #if not Path(f'{dir}/{bench}').is_dir():
+        if not Path(os.path.join(cwd, _dir, bench)).is_dir():
             print('ERROR: benchmark directory not found! Check if directory is correct or if benchmark is available.')
             print('exiting...')
             return
@@ -90,8 +92,10 @@ class RandomSearch(Heuristic):
         area_paretto =  []
         energy_area_paretto = []
 
-        solutions = os.listdir(path=f'{dir}/{bench}')
+        #solutions = os.listdir(path=f'{_dir}/{bench}')
+        solutions = os.listdir(os.path.join(cwd, _dir, bench))
 
+        print(f'looking solutions inside {solutions}...')
         for sol in solutions:
             sol_ff = -1
             sol_bram = -1
@@ -101,7 +105,7 @@ class RandomSearch(Heuristic):
             sol_cycles = -1
             
             if Path(sol).is_dir():
-                with open(f'{dir}/{bench}/{sol}/impl/verilog/project.runs/impl_1/bd_0_wrapper_utilization_placed.rpt', 'r') as f:
+                with open(f'{_dir}/{bench}/{sol}/impl/verilog/project.runs/impl_1/bd_0_wrapper_utilization_placed.rpt', 'r') as f:
                     lines = f.readlines()
                 for line in lines:
                     if line.find('CLB LUTs') != -1:
@@ -119,7 +123,7 @@ class RandomSearch(Heuristic):
 
                 sol_area = sol_lut/MAX_LUT + sol_ff/MAX_FF + sol_bram/MAX_BRAM + sol_dsp/MAX_DSP
 
-                with open(f'{dir}/{bench}/{sol}/impl/verilog/project.runs/impl_1/bd_0_wrapper_timming_summary.rpt', 'r') as f:
+                with open(f'{_dir}/{bench}/{sol}/impl/verilog/project.runs/impl_1/bd_0_wrapper_timming_summary.rpt', 'r') as f:
                     is_first_clk = True
                     lines = f.readlines()
                 for line in lines:
@@ -128,14 +132,14 @@ class RandomSearch(Heuristic):
                         sol_period = float((rx.findall(line))[2])
                         print(f'period found: {sol_period}')
 
-                with open(f'{dir}/{bench}/{sol}/impl/verilog/project.runs/impl_1/bd_0_wrapper_power_routed.rpt', 'r') as f:
+                with open(f'{_dir}/{bench}/{sol}/impl/verilog/project.runs/impl_1/bd_0_wrapper_power_routed.rpt', 'r') as f:
                     lines = f.readlines()
                 for line in lines:
                     if line.find('Total On-Chip Power (W)') != -1:
                         sol_power = float((rx.findall(line))[0])
                         print(f'power found: {sol_power}')
 
-                with open(f'{dir}/{bench}/{sol}/syn/report/csynth.rpt', 'r') as f:
+                with open(f'{_dir}/{bench}/{sol}/syn/report/csynth.rpt', 'r') as f:
                     line_count = 0
                     lines = f.readlines()
                 for line in lines:
