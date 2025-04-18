@@ -119,7 +119,6 @@ class RandomSearch(Heuristic):
         np_cycle = np.array([])
         np_time = np.array([])
         np_energy = np.array([])
-        np_cycle = np.array([])
         for sol in solutions:
             disregard_sol = False
             is_already_disregarded = False
@@ -138,24 +137,19 @@ class RandomSearch(Heuristic):
                         lines = f.readlines()
                     for line in lines:
                         if line.find('CLB LUTs') != -1:
-                            np_lut = np.append(np_lut, int((rx.findall(line))[0]))
-                            #sol_lut = int((rx.findall(line))[0])
+                            sol_lut = int((rx.findall(line))[0])
                             #print(f'lut found: {sol_lut}')
                         if line.find('CLB Registers') != -1:
-                            np_ff = np.append(np_ff, int((rx.findall(line))[0]))
-                            #sol_ff = int((rx.findall(line))[0])
+                            sol_ff = int((rx.findall(line))[0])
                             #print(f'ff found: {sol_ff}')
                         if line.find('Block RAM Tile') != -1:
-                            np_bram = np.append(np_bram, float((rx.findall(line))[0]))
-                            #sol_bram = float((rx.findall(line))[0])
+                            sol_bram = float((rx.findall(line))[0])
                             #print(f'bram found: {sol_bram}')
                         if line.find(' DSPs') != -1:
-                            np_dsp = np.append(np_dsp, int((rx.findall(line))[0]))
-                            #sol_dsp = int((rx.findall(line))[0])
+                            sol_dsp = int((rx.findall(line))[0])
                             #print(f'dsp found: {sol_dsp}')
 
                     sol_area = sol_lut/MAX_LUT + sol_ff/MAX_FF + sol_bram/MAX_BRAM + sol_dsp/MAX_DSP
-                    np_area = np_lut/MAX_LUT + np_ff/MAX_FF + np_bram/MAX_BRAM + np_dsp/MAX_DSP
                 else:
                     disregard_sol = True
                     if not is_already_disregarded:
