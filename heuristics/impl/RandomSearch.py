@@ -126,12 +126,15 @@ class RandomSearch(Heuristic):
                             sol_dsp = int((rx.findall(line))[0])
                             print(f'dsp found: {sol_dsp}')
 
-                sol_area = sol_lut/MAX_LUT + sol_ff/MAX_FF + sol_bram/MAX_BRAM + sol_dsp/MAX_DSP
+                    sol_area = sol_lut/MAX_LUT + sol_ff/MAX_FF + sol_bram/MAX_BRAM + sol_dsp/MAX_DSP
                 else:
                     disregard_sol = True
                     if not is_already_disregarded:
                         is_already_disregarded = True
                         disregard_count = disregard_count + 1
+
+                
+                
 
                 if Path(f'{sol_path}/impl/verilog/project.runs/impl_1/bd_0_wrapper_timing_summary_routed.rpt').is_file():
                     with open(f'{sol_path}/impl/verilog/project.runs/impl_1/bd_0_wrapper_timing_summary_routed.rpt', 'r') as f:
