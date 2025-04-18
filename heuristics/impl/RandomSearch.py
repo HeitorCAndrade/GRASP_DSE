@@ -99,8 +99,8 @@ class RandomSearch(Heuristic):
         for sol in solutions:
             disregard_sol = False
             is_already_disregarded = False
-            print('\n')
-            print(f'checking solution {sol}...')
+            #print('\n')
+            #print(f'checking solution {sol}...')
             sol_ff = -1
             sol_bram = -1
             sol_dsp = -1
