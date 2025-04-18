@@ -123,7 +123,7 @@ class RandomSearch(Heuristic):
 
                 sol_area = sol_lut/MAX_LUT + sol_ff/MAX_FF + sol_bram/MAX_BRAM + sol_dsp/MAX_DSP
 
-                with open(f'{sol_path}/impl/verilog/project.runs/impl_1/bd_0_wrapper_timming_summary.rpt', 'r') as f:
+                with open(f'{sol_path}/impl/verilog/project.runs/impl_1/bd_0_wrapper_timing_summary_routed.rpt', 'r') as f:
                     is_first_occurrence = True
                     lines = f.readlines()
                 for line in lines:
