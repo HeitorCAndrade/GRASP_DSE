@@ -148,7 +148,7 @@ class RandomSearch(Heuristic):
                         line_count = line_count + 1
                     if line_count > 0:
                         line_count = line_count + 1
-                    if line_count == 3:
+                    if line_count == 4:
                         sol_cycles = int((rx.findall(line))[1])
                         print(f'cycle found: {sol_cycles}')
 
