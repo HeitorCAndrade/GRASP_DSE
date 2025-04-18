@@ -231,7 +231,7 @@ class RandomSearch(Heuristic):
 
         p_front = [sol_dict[sorted_dict[0]]] #shortest time from solutions
         p_front_sols = [sorted_dict[0]]
-        for index in range(len(sorted_dict)-1)
+        for index in range(len(sorted_dict)-1):
             i = index+1
             pair = [sol_dict[sorted_dict[i]][0], sol_dict[sorted_dict[i]][1]]
             if pair[1] <= p_front[-1][1]:
