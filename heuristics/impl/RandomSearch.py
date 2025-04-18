@@ -144,6 +144,7 @@ class RandomSearch(Heuristic):
                     lines = f.readlines()
                 for line in lines:
                     if line.find('(cycles)') != -1:
+                        print(line)
                         line_count = line_count + 1
                     if line_count > 0:
                         line_count = line_count + 1
