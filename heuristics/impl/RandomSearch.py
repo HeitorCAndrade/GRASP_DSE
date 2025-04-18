@@ -96,6 +96,7 @@ class RandomSearch(Heuristic):
         solutions = os.listdir(os.path.join(cwd, _dir, bench))
 
         for sol in solutions:
+            print(f'checking solution {sol}...')
             sol_ff = -1
             sol_bram = -1
             sol_dsp = -1
@@ -123,11 +124,11 @@ class RandomSearch(Heuristic):
                 sol_area = sol_lut/MAX_LUT + sol_ff/MAX_FF + sol_bram/MAX_BRAM + sol_dsp/MAX_DSP
 
                 with open(f'{sol_path}/impl/verilog/project.runs/impl_1/bd_0_wrapper_timming_summary.rpt', 'r') as f:
-                    is_first_clk = True
+                    is_first_occurrence = True
                     lines = f.readlines()
                 for line in lines:
-                    if line.find('ap_clk') != -1 and is_first_clk:
-                        is_first_clk = False
+                    if line.find('ap_clk') != -1 and is_first_occurrence:
+                        is_first_occurrence = False
                         sol_period = float((rx.findall(line))[2])
                         print(f'period found: {sol_period}')
 
