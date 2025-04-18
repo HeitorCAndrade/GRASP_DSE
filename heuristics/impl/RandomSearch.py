@@ -83,10 +83,10 @@ class RandomSearch(Heuristic):
             print('exiting...')
             return
         
-        best_energy = np.nan
-        best_time = np.nan
-        best_power = np.nan
-        best_area = np.nan
+        best_energy = 9999999999999
+        best_time = 9999999999999999999
+        best_power = 999999999999999999
+        best_area = 5
 
         energy_paretto =  []
         power_paretto =  []
