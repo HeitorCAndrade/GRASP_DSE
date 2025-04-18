@@ -95,7 +95,6 @@ class RandomSearch(Heuristic):
         #solutions = os.listdir(path=f'{_dir}/{bench}')
         solutions = os.listdir(os.path.join(cwd, _dir, bench))
 
-        print(f'looking solutions inside {solutions}...')
         for sol in solutions:
             sol_ff = -1
             sol_bram = -1
@@ -103,9 +102,9 @@ class RandomSearch(Heuristic):
             sol_power = -1
             sol_period = -1.0
             sol_cycles = -1
-            
-            if Path(sol).is_dir():
-                with open(f'{_dir}/{bench}/{sol}/impl/verilog/project.runs/impl_1/bd_0_wrapper_utilization_placed.rpt', 'r') as f:
+            sol_path = os.path.join(cwd, _dir, bench, sol)
+            if Path(sol_path).is_dir():
+                with open(f'{sol_path}/impl/verilog/project.runs/impl_1/bd_0_wrapper_utilization_placed.rpt', 'r') as f:
                     lines = f.readlines()
                 for line in lines:
                     if line.find('CLB LUTs') != -1:
@@ -123,7 +122,7 @@ class RandomSearch(Heuristic):
 
                 sol_area = sol_lut/MAX_LUT + sol_ff/MAX_FF + sol_bram/MAX_BRAM + sol_dsp/MAX_DSP
 
-                with open(f'{_dir}/{bench}/{sol}/impl/verilog/project.runs/impl_1/bd_0_wrapper_timming_summary.rpt', 'r') as f:
+                with open(f'{sol_path}/impl/verilog/project.runs/impl_1/bd_0_wrapper_timming_summary.rpt', 'r') as f:
                     is_first_clk = True
                     lines = f.readlines()
                 for line in lines:
@@ -132,14 +131,14 @@ class RandomSearch(Heuristic):
                         sol_period = float((rx.findall(line))[2])
                         print(f'period found: {sol_period}')
 
-                with open(f'{_dir}/{bench}/{sol}/impl/verilog/project.runs/impl_1/bd_0_wrapper_power_routed.rpt', 'r') as f:
+                with open(f'{sol_path}/impl/verilog/project.runs/impl_1/bd_0_wrapper_power_routed.rpt', 'r') as f:
                     lines = f.readlines()
                 for line in lines:
                     if line.find('Total On-Chip Power (W)') != -1:
                         sol_power = float((rx.findall(line))[0])
                         print(f'power found: {sol_power}')
 
-                with open(f'{_dir}/{bench}/{sol}/syn/report/csynth.rpt', 'r') as f:
+                with open(f'{sol_path}/syn/report/csynth.rpt', 'r') as f:
                     line_count = 0
                     lines = f.readlines()
                 for line in lines:
