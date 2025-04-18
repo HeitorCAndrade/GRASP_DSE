@@ -230,7 +230,7 @@ class RandomSearch(Heuristic):
             for line in area_paretto:
                 fa.write(f'{line}\n')
 
-        print(f'finished writing paretto files! There was {disregard_count} solutions that were disregarded')
+        print(f'finished writing paretto files! There was {disregard_count} solution(s) that were disregarded')
         print('exiting...')
 
 
