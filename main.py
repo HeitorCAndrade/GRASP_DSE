@@ -45,6 +45,7 @@ if __name__ == "__main__":
     parser.add_argument("-f", "--filter", help = "filter the specified dataset, leaving only the reports,dcp files and directives on a new directory",required=False, nargs='?', const=1)
     parser.add_argument("-rpts", "--reports", help = "generate missing reports on the benchmark's instances that were succesful [WORK IN PROGRESS]",required=False, nargs='?', const=1)
     parser.add_argument("-cc", "--clean", help = "remove files from benchmark runs, leaving only IRs, reports and files from vivado project [WORK IN PROGRESS]",required=False, nargs='?', const=1)
+    parser.add_argument("-pf", "--paretto_frontier", help = "get all instances that forms the paretto frontier for that benchmark",required=False, nargs='?', const=1)
 
     filesDict = {}
     # Read arguments from command line
@@ -96,6 +97,11 @@ if __name__ == "__main__":
         filesDict['clean'] = True
     else:
         filesDict['clean'] = False
+
+    if args.paretto_frontier is not None:
+        filesDict['paretto_frontier'] = True
+    else:
+        filesDict['paretto_frontier'] = False
     
     # hour = 3600
     # RESOURCE_TO_COMPARE = 'resources'

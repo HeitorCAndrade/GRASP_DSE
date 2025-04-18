@@ -15,6 +15,7 @@ import json
 import os
 import time
 import psutil
+import json
 from heuristics.heuristic import Heuristic
 from pathlib import Path
 from domain.solution import Solution
@@ -27,6 +28,8 @@ import shutil
 from random import seed
 from random import randint
 import random
+import numpy as np
+import re
 from utils.abstractSolutionsSaver import SolutionsSaver
 
 class RandomSearch(Heuristic):
@@ -52,10 +55,193 @@ class RandomSearch(Heuristic):
             self.filter_dataset(self.benchName)
         elif self.filesDict['clean']:
             self.remove_unwanted_files(self.benchName)
+        elif self.filesDict['paretto_frontier'] != '':
+            self.paretto_frontier(self.benchName, dir)
+            pass
         else:
             self.run()
+
+
     def setTimeLimit(self,seconds):
         self._SECONDS = seconds
+
+
+    def paretto_frontier(self, bench, dir = './DATASETS/'):
+        numeric_const_pattern = '[-+]? (?: (?: \d* \. \d+ ) | (?: \d+ \.? ) )(?: [Ee] [+-]? \d+ ) ?'
+        rx = re.compile(numeric_const_pattern, re.VERBOSE)
+        MAX_LUT = 871680
+        MAX_FF = 1743360
+        MAX_BRAM = 1344
+        MAX_DSP = 5952
+        #return instances that form the paretto frontier for that benchmark
+
+        if not Path(f'{dir}/{bench}').is_dir():
+            print('ERROR: benchmark directory not found! Check if directory is correct or if benchmark is available.')
+            print('exiting...')
+            return
+        
+        best_energy = np.nan
+        best_time = np.nan
+        best_power = np.nan
+        best_area = np.nan
+
+        energy_paretto =  []
+        power_paretto =  []
+        area_paretto =  []
+        energy_area_paretto = []
+
+        solutions = os.listdir(path=f'{dir}/{bench}')
+
+        for sol in solutions:
+            sol_ff = -1
+            sol_bram = -1
+            sol_dsp = -1
+            sol_power = -1
+            sol_period = -1.0
+            sol_cycles = -1
+            
+            if Path(sol).is_dir():
+                with open(f'{dir}/{bench}/{sol}/impl/verilog/project.runs/impl_1/bd_0_wrapper_utilization_placed.rpt', 'r') as f:
+                    lines = f.readlines()
+                for line in lines:
+                    if line.find('CLB LUTs') != -1:
+                        sol_lut = int((rx.findall(line))[0])
+                        print(f'lut found: {sol_lut}')
+                    if line.find('CLB Registers') != -1:
+                        sol_ff = int((rx.findall(line))[0])
+                        print(f'ff found: {sol_ff}')
+                    if line.find('Block RAM Tile') != -1:
+                        sol_bram = int((rx.findall(line))[0])
+                        print(f'bram found: {sol_bram}')
+                    if line.find(' DSPs') != -1:
+                        sol_dsp = int((rx.findall(line))[0])
+                        print(f'dsp found: {sol_dsp}')
+
+                sol_area = sol_lut/MAX_LUT + sol_ff/MAX_FF + sol_bram/MAX_BRAM + sol_dsp/MAX_DSP
+
+                with open(f'{dir}/{bench}/{sol}/impl/verilog/project.runs/impl_1/bd_0_wrapper_timming_summary.rpt', 'r') as f:
+                    is_first_clk = True
+                    lines = f.readlines()
+                for line in lines:
+                    if line.find('ap_clk') != -1 and is_first_clk:
+                        is_first_clk = False
+                        sol_period = float((rx.findall(line))[2])
+                        print(f'period found: {sol_period}')
+
+                with open(f'{dir}/{bench}/{sol}/impl/verilog/project.runs/impl_1/bd_0_wrapper_power_routed.rpt', 'r') as f:
+                    lines = f.readlines()
+                for line in lines:
+                    if line.find('Total On-Chip Power (W)') != -1:
+                        sol_power = float((rx.findall(line))[0])
+                        print(f'power found: {sol_power}')
+
+                with open(f'{dir}/{bench}/{sol}/syn/report/csynth.rpt', 'r') as f:
+                    line_count = 0
+                    lines = f.readlines()
+                for line in lines:
+                    if line.find('(cycles)') != -1:
+                        line_count = line_count + 1
+                    if line_count > 0:
+                        line_count = line_count + 1
+                    if line_count == 3:
+                        sol_cycles = int((rx.findall(line))[1])
+                        print(f'cycle found: {sol_cycles}')
+
+                sol_time = sol_cycles * sol_period
+                sol_energy = sol_power * sol_time
+                
+
+                #time x energy
+                if sol_energy < best_energy:
+                    best_energy = sol_energy
+                    energy_paretto.append(sol)
+                elif sol_time < best_time:
+                    best_time = sol_time
+                    energy_paretto.append(sol)
+                elif (sol_energy == best_energy) and (sol_time == best_time):
+                    energy_paretto.append(sol)
+
+                #time x power
+                if sol_power < best_power:
+                    best_power = sol_power
+                    power_paretto.append(sol)
+                elif sol_time < best_time:
+                    best_time = sol_time
+                    power_paretto.append(sol)
+                elif (sol_power == best_power) and (sol_time == best_time):
+                    power_paretto.append(sol)
+
+                #time x area
+                if sol_area < best_area:
+                    best_area = sol_area
+                    area_paretto.append(sol)
+                elif sol_time < best_time:
+                    best_time = sol_time
+                    area_paretto.append(sol)
+                elif (sol_area == best_area) and (sol_time == best_time):
+                    area_paretto.append(sol)
+
+        with open('paretto_energy.txt', 'w') as fe:
+            for line in energy_paretto:
+                fe.write(f'{line}\n')
+
+        with open('paretto_power.txt', 'w') as fp:
+            for line in power_paretto:
+                fp.write(f'{line}\n')
+
+        with open('paretto_area.txt', 'w') as fa:
+            for line in area_paretto:
+                fa.write(f'{line}\n')
+
+        print('finished writing paretto files!')
+        print('exiting...')
+
+
+                #check time x power, time x energy, energy x area, time x area
+
+
+    # def run_loop_dict(self, bench, loop_directive, dir = '.'):
+    #     print('WARNING: bases instances must be done before running this command!')
+    #     run = 1
+    #     if loop_directive == 'merge':
+    #         chosed_direct = 'loop_merge'
+    #     else:
+    #         chosed_direct = 'loop_flatten'
+
+    #     #directories = os.listdir(path=f'./DATASETS/{bench}')
+
+    #     #number of base runs to gather data
+    #     runs = 30
+    #     json_file = '/home/heitor/Masters/DATASET_GEN/solution2_data.json'
+    #     #first, extract directives from run
+        
+    #     to_read_run = 'solution'+str(run)
+    #     options = []
+    #     # for i in range(runs):
+    #     #     if Path(f'{dir}/{bench}').is_dir():
+    #     #         if Path(f'{dir}/{bench}/{to_read_run}/{to_read_run}_data.json').is_file():
+    #     with open(json_file, 'r') as jf:
+    #         sol_json:dict = json.load(jf)
+    #         #print(sol_json['HlsSolution']['DirectiveTcl'])
+    #     base_run_directives = sol_json['HlsSolution']['DirectiveTcl']
+
+    #     #get flatten or merge directives available
+    #     json_2 = f'./directives_files/aes.json'
+    #     with open(json_2, 'r') as jf:
+    #         directives_options:dict = json.load(jf)
+
+        
+    #     for d, c in directives_options['directives'].items():
+    #         if d.find(chosed_direct) != -1:
+    #             flatten_option = c['possible_directives'][1]
+    #             options.append(flatten_option)
+
+    #     #print(options)
+
+    #     #transform directives from solution + loop/merge into solution for script generation
+    #     final_directives = []
+    #     run = run + 1
+
 
     def copy_prj_files(self, benchName, sol):
         from_dir = f'./DATASETS/{benchName}/{sol}/'
