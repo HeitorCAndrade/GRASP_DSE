@@ -68,6 +68,7 @@ class RandomSearch(Heuristic):
 
     def paretto_frontier(self, bench, _dir = 'DATASETS'):
         cwd = os.getcwd()
+        disregard_count = 0
         numeric_const_pattern = '[-+]? (?: (?: \d* \. \d+ ) | (?: \d+ \.? ) )(?: [Ee] [+-]? \d+ ) ?'
         rx = re.compile(numeric_const_pattern, re.VERBOSE)
         MAX_LUT = 871680
@@ -96,6 +97,9 @@ class RandomSearch(Heuristic):
         solutions = os.listdir(os.path.join(cwd, _dir, bench))
 
         for sol in solutions:
+            disregard_sol = False
+            is_already_disregarded = False
+            print('\n')
             print(f'checking solution {sol}...')
             sol_ff = -1
             sol_bram = -1
@@ -105,86 +109,111 @@ class RandomSearch(Heuristic):
             sol_cycles = -1
             sol_path = os.path.join(cwd, _dir, bench, sol)
             if Path(sol_path).is_dir():
-                with open(f'{sol_path}/impl/verilog/project.runs/impl_1/bd_0_wrapper_utilization_placed.rpt', 'r') as f:
-                    lines = f.readlines()
-                for line in lines:
-                    if line.find('CLB LUTs') != -1:
-                        sol_lut = int((rx.findall(line))[0])
-                        print(f'lut found: {sol_lut}')
-                    if line.find('CLB Registers') != -1:
-                        sol_ff = int((rx.findall(line))[0])
-                        print(f'ff found: {sol_ff}')
-                    if line.find('Block RAM Tile') != -1:
-                        sol_bram = float((rx.findall(line))[0])
-                        print(f'bram found: {sol_bram}')
-                    if line.find(' DSPs') != -1:
-                        sol_dsp = int((rx.findall(line))[0])
-                        print(f'dsp found: {sol_dsp}')
+                if Path(f'{sol_path}/impl/verilog/project.runs/impl_1/bd_0_wrapper_utilization_placed.rpt').is_file():
+                    with open(f'{sol_path}/impl/verilog/project.runs/impl_1/bd_0_wrapper_utilization_placed.rpt', 'r') as f:
+                        lines = f.readlines()
+                    for line in lines:
+                        if line.find('CLB LUTs') != -1:
+                            sol_lut = int((rx.findall(line))[0])
+                            print(f'lut found: {sol_lut}')
+                        if line.find('CLB Registers') != -1:
+                            sol_ff = int((rx.findall(line))[0])
+                            print(f'ff found: {sol_ff}')
+                        if line.find('Block RAM Tile') != -1:
+                            sol_bram = float((rx.findall(line))[0])
+                            print(f'bram found: {sol_bram}')
+                        if line.find(' DSPs') != -1:
+                            sol_dsp = int((rx.findall(line))[0])
+                            print(f'dsp found: {sol_dsp}')
 
                 sol_area = sol_lut/MAX_LUT + sol_ff/MAX_FF + sol_bram/MAX_BRAM + sol_dsp/MAX_DSP
+                else:
+                    disregard_sol = True
+                    if not is_already_disregarded:
+                        is_already_disregarded = True
+                        disregard_count = disregard_count + 1
 
-                with open(f'{sol_path}/impl/verilog/project.runs/impl_1/bd_0_wrapper_timing_summary_routed.rpt', 'r') as f:
-                    is_first_occurrence = True
-                    lines = f.readlines()
-                for line in lines:
-                    if line.find('ap_clk') != -1 and is_first_occurrence:
-                        is_first_occurrence = False
-                        sol_period = float((rx.findall(line))[2])
-                        print(f'period found: {sol_period}')
+                if Path(f'{sol_path}/impl/verilog/project.runs/impl_1/bd_0_wrapper_timing_summary_routed.rpt').is_file():
+                    with open(f'{sol_path}/impl/verilog/project.runs/impl_1/bd_0_wrapper_timing_summary_routed.rpt', 'r') as f:
+                        is_first_occurrence = True
+                        lines = f.readlines()
+                    for line in lines:
+                        if line.find('ap_clk') != -1 and is_first_occurrence:
+                            is_first_occurrence = False
+                            sol_period = float((rx.findall(line))[2])
+                            print(f'period found: {sol_period}')
+                else:
+                    disregard_sol = True
+                    if not is_already_disregarded:
+                        is_already_disregarded = True
+                        disregard_count = disregard_count + 1
 
-                with open(f'{sol_path}/impl/verilog/project.runs/impl_1/bd_0_wrapper_power_routed.rpt', 'r') as f:
-                    lines = f.readlines()
-                for line in lines:
-                    if line.find('Total On-Chip Power (W)') != -1:
-                        sol_power = float((rx.findall(line))[0])
-                        print(f'power found: {sol_power}')
+                if Path(f'{sol_path}/impl/verilog/project.runs/impl_1/bd_0_wrapper_power_routed.rpt').is_file():
+                    with open(f'{sol_path}/impl/verilog/project.runs/impl_1/bd_0_wrapper_power_routed.rpt', 'r') as f:
+                        lines = f.readlines()
+                    for line in lines:
+                        if line.find('Total On-Chip Power (W)') != -1:
+                            sol_power = float((rx.findall(line))[0])
+                            print(f'power found: {sol_power}')
+                else:
+                    disregard_sol = True
+                    if not is_already_disregarded:
+                        is_already_disregarded = True
+                        disregard_count = disregard_count + 1
 
-                with open(f'{sol_path}/syn/report/csynth.rpt', 'r') as f:
-                    line_count = 0
-                    lines = f.readlines()
-                for line in lines:
-                    if line.find('(cycles)') != -1:
-                        print(line)
-                        line_count = line_count + 1
-                    if line_count > 0:
-                        line_count = line_count + 1
-                    if line_count == 4:
-                        sol_cycles = int((rx.findall(line))[1])
-                        print(f'cycle found: {sol_cycles}')
+                if Path(f'{sol_path}/syn/report/csynth.rpt').is_file():
+                    with open(f'{sol_path}/syn/report/csynth.rpt', 'r') as f:
+                        line_count = 0
+                        lines = f.readlines()
+                    for line in lines:
+                        if line.find('(cycles)') != -1:
+                            line_count = line_count + 1
+                        if line_count > 0:
+                            line_count = line_count + 1
+                        if line_count == 4:
+                            sol_cycles = int((rx.findall(line))[1])
+                            print(f'cycle found: {sol_cycles}')
+                else:
+                    disregard_sol = True
+                    if not is_already_disregarded:
+                        is_already_disregarded = True
+                        disregard_count = disregard_count + 1
 
                 sol_time = sol_cycles * sol_period
                 sol_energy = sol_power * sol_time
                 
 
-                #time x energy
-                if sol_energy < best_energy:
-                    best_energy = sol_energy
-                    energy_paretto.append(sol)
-                elif sol_time < best_time:
-                    best_time = sol_time
-                    energy_paretto.append(sol)
-                elif (sol_energy == best_energy) and (sol_time == best_time):
-                    energy_paretto.append(sol)
+                if not disregard_sol:
+                    #time x energy
+                    if sol_energy < best_energy:
+                        best_energy = sol_energy
+                        energy_paretto.append(sol)
+                    elif sol_time < best_time:
+                        best_time = sol_time
+                        energy_paretto.append(sol)
+                    elif (sol_energy == best_energy) and (sol_time == best_time):
+                        energy_paretto.append(sol)
 
-                #time x power
-                if sol_power < best_power:
-                    best_power = sol_power
-                    power_paretto.append(sol)
-                elif sol_time < best_time:
-                    best_time = sol_time
-                    power_paretto.append(sol)
-                elif (sol_power == best_power) and (sol_time == best_time):
-                    power_paretto.append(sol)
+                    #time x power
+                    if sol_power < best_power:
+                        best_power = sol_power
+                        power_paretto.append(sol)
+                    elif sol_time < best_time:
+                        best_time = sol_time
+                        power_paretto.append(sol)
+                    elif (sol_power == best_power) and (sol_time == best_time):
+                        power_paretto.append(sol)
 
-                #time x area
-                if sol_area < best_area:
-                    best_area = sol_area
-                    area_paretto.append(sol)
-                elif sol_time < best_time:
-                    best_time = sol_time
-                    area_paretto.append(sol)
-                elif (sol_area == best_area) and (sol_time == best_time):
-                    area_paretto.append(sol)
+                    #time x area
+                    if sol_area < best_area:
+                        best_area = sol_area
+                        area_paretto.append(sol)
+                    elif sol_time < best_time:
+                        best_time = sol_time
+                        area_paretto.append(sol)
+                    elif (sol_area == best_area) and (sol_time == best_time):
+                        area_paretto.append(sol)
+                        
 
         with open('paretto_energy.txt', 'w') as fe:
             for line in energy_paretto:
@@ -198,7 +227,7 @@ class RandomSearch(Heuristic):
             for line in area_paretto:
                 fa.write(f'{line}\n')
 
-        print('finished writing paretto files!')
+        print(f'finished writing paretto files! There was {disregard_count} solutions that were disregarded')
         print('exiting...')
 
 
