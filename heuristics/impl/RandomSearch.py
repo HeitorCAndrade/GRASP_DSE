@@ -115,7 +115,7 @@ class RandomSearch(Heuristic):
                         sol_ff = int((rx.findall(line))[0])
                         print(f'ff found: {sol_ff}')
                     if line.find('Block RAM Tile') != -1:
-                        sol_bram = int((rx.findall(line))[0])
+                        sol_bram = float((rx.findall(line))[0])
                         print(f'bram found: {sol_bram}')
                     if line.find(' DSPs') != -1:
                         sol_dsp = int((rx.findall(line))[0])
