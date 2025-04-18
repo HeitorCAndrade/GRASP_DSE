@@ -115,16 +115,16 @@ class RandomSearch(Heuristic):
                     for line in lines:
                         if line.find('CLB LUTs') != -1:
                             sol_lut = int((rx.findall(line))[0])
-                            print(f'lut found: {sol_lut}')
+                            #print(f'lut found: {sol_lut}')
                         if line.find('CLB Registers') != -1:
                             sol_ff = int((rx.findall(line))[0])
-                            print(f'ff found: {sol_ff}')
+                            #print(f'ff found: {sol_ff}')
                         if line.find('Block RAM Tile') != -1:
                             sol_bram = float((rx.findall(line))[0])
-                            print(f'bram found: {sol_bram}')
+                            #print(f'bram found: {sol_bram}')
                         if line.find(' DSPs') != -1:
                             sol_dsp = int((rx.findall(line))[0])
-                            print(f'dsp found: {sol_dsp}')
+                            #print(f'dsp found: {sol_dsp}')
 
                     sol_area = sol_lut/MAX_LUT + sol_ff/MAX_FF + sol_bram/MAX_BRAM + sol_dsp/MAX_DSP
                 else:
@@ -144,7 +144,7 @@ class RandomSearch(Heuristic):
                         if line.find('ap_clk') != -1 and is_first_occurrence:
                             is_first_occurrence = False
                             sol_period = float((rx.findall(line))[2])
-                            print(f'period found: {sol_period}')
+                            #print(f'period found: {sol_period}')
                 else:
                     disregard_sol = True
                     if not is_already_disregarded:
@@ -157,7 +157,7 @@ class RandomSearch(Heuristic):
                     for line in lines:
                         if line.find('Total On-Chip Power (W)') != -1:
                             sol_power = float((rx.findall(line))[0])
-                            print(f'power found: {sol_power}')
+                            #print(f'power found: {sol_power}')
                 else:
                     disregard_sol = True
                     if not is_already_disregarded:
@@ -175,7 +175,7 @@ class RandomSearch(Heuristic):
                             line_count = line_count + 1
                         if line_count == 4:
                             sol_cycles = int((rx.findall(line))[1])
-                            print(f'cycle found: {sol_cycles}')
+                            #print(f'cycle found: {sol_cycles}')
                 else:
                     disregard_sol = True
                     if not is_already_disregarded:
@@ -190,12 +190,15 @@ class RandomSearch(Heuristic):
                     #time x energy
                     if sol_energy < best_energy:
                         best_energy = sol_energy
+                        print('energy paretto updated! (energy axis)')
                         energy_paretto.append(sol)
                     elif sol_time < best_time:
                         best_time = sol_time
+                        print('energy paretto updated! (time axis)')
                         energy_paretto.append(sol)
                     elif (sol_energy == best_energy) and (sol_time == best_time):
                         energy_paretto.append(sol)
+                        print('energy paretto updated! solution with equal values as frontier')
 
                     #time x power
                     if sol_power < best_power:
