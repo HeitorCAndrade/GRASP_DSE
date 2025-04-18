@@ -66,6 +66,20 @@ class RandomSearch(Heuristic):
         self._SECONDS = seconds
 
 
+    def _pf(Xs, Ys, maxX = False, maxY = False):
+        myList = sorted([[Xs[i], Ys[i]] for i in range(len(Xs))], reverse=maxX)
+        p_front = [myList[0]]    
+        for pair in myList[1:]:
+            if maxY: 
+                if pair[1] >= p_front[-1][1]:
+                    p_front.append(pair)
+            else:
+                if pair[1] <= p_front[-1][1]:
+                    p_front.append(pair)
+        p_frontX = [pair[0] for pair in p_front]
+        p_frontY = [pair[1] for pair in p_front]
+        return p_frontX, p_frontY
+
     def paretto_frontier(self, bench, _dir = 'DATASETS'):
         cwd = os.getcwd()
         disregard_count = 0
@@ -83,11 +97,12 @@ class RandomSearch(Heuristic):
             print('exiting...')
             return
         
-        best_energy = 9999999999999
+        best_energy = 999999999999999999
         best_time = 9999999999999999999
         best_power = 999999999999999999
         best_area = 5
 
+        valid_sols_list = []
         energy_paretto =  []
         power_paretto =  []
         area_paretto =  []
@@ -95,7 +110,16 @@ class RandomSearch(Heuristic):
 
         #solutions = os.listdir(path=f'{_dir}/{bench}')
         solutions = os.listdir(os.path.join(cwd, _dir, bench))
-
+        np_lut = np.array([])
+        np_ff = np.array([])
+        np_bram = np.array([])
+        np_dsp = np.array([])
+        np_power = np.array([])
+        np_latency = np.array([])
+        np_cycle = np.array([])
+        np_time = np.array([])
+        np_energy = np.array([])
+        np_cycle = np.array([])
         for sol in solutions:
             disregard_sol = False
             is_already_disregarded = False
@@ -114,19 +138,24 @@ class RandomSearch(Heuristic):
                         lines = f.readlines()
                     for line in lines:
                         if line.find('CLB LUTs') != -1:
-                            sol_lut = int((rx.findall(line))[0])
+                            np_lut = np.append(np_lut, int((rx.findall(line))[0]))
+                            #sol_lut = int((rx.findall(line))[0])
                             #print(f'lut found: {sol_lut}')
                         if line.find('CLB Registers') != -1:
-                            sol_ff = int((rx.findall(line))[0])
+                            np_ff = np.append(np_ff, int((rx.findall(line))[0]))
+                            #sol_ff = int((rx.findall(line))[0])
                             #print(f'ff found: {sol_ff}')
                         if line.find('Block RAM Tile') != -1:
-                            sol_bram = float((rx.findall(line))[0])
+                            np_bram = np.append(np_bram, float((rx.findall(line))[0]))
+                            #sol_bram = float((rx.findall(line))[0])
                             #print(f'bram found: {sol_bram}')
                         if line.find(' DSPs') != -1:
-                            sol_dsp = int((rx.findall(line))[0])
+                            np_dsp = np.append(np_dsp, int((rx.findall(line))[0]))
+                            #sol_dsp = int((rx.findall(line))[0])
                             #print(f'dsp found: {sol_dsp}')
 
                     sol_area = sol_lut/MAX_LUT + sol_ff/MAX_FF + sol_bram/MAX_BRAM + sol_dsp/MAX_DSP
+                    np_area = np_lut/MAX_LUT + np_ff/MAX_FF + np_bram/MAX_BRAM + np_dsp/MAX_DSP
                 else:
                     disregard_sol = True
                     if not is_already_disregarded:
@@ -187,51 +216,46 @@ class RandomSearch(Heuristic):
                 
 
                 if not disregard_sol:
-                    #time x energy
-                    if sol_energy < best_energy:
-                        best_energy = sol_energy
-                        print('energy paretto updated! (energy axis)')
-                        energy_paretto.append(sol)
-                    elif sol_time < best_time:
-                        best_time = sol_time
-                        print('energy paretto updated! (time axis)')
-                        energy_paretto.append(sol)
-                    elif (sol_energy == best_energy) and (sol_time == best_time):
-                        energy_paretto.append(sol)
-                        print('energy paretto updated! solution with equal values as frontier')
+                    valid_sols_list.append(sol)
+                    np_time = np.append(np_time, sol_time)
+                    np_energy = np.append(np_energy, sol_energy)
+                    
 
-                    #time x power
-                    if sol_power < best_power:
-                        best_power = sol_power
-                        power_paretto.append(sol)
-                    elif sol_time < best_time:
-                        best_time = sol_time
-                        power_paretto.append(sol)
-                    elif (sol_power == best_power) and (sol_time == best_time):
-                        power_paretto.append(sol)
+        sol_dict = dict()
+        for i in range(len(valid_sols_list)):
+            sol_dict[valid_sols_list[i]] = [np_time[i], np_energy[i]]
 
-                    #time x area
-                    if sol_area < best_area:
-                        best_area = sol_area
-                        area_paretto.append(sol)
-                    elif sol_time < best_time:
-                        best_time = sol_time
-                        area_paretto.append(sol)
-                    elif (sol_area == best_area) and (sol_time == best_time):
-                        area_paretto.append(sol)
+        sorted_dict = sorted([sol_dict[i] for i in sol_dict.keys()])
+        print(sorted_dict)
+
+
+        p_front = [sol_dict[sorted_dict[0]]] #shortest time from solutions
+        p_front_sols = [sorted_dict[0]]
+        for index in range(len(sorted_dict)-1)
+            i = index+1
+            pair = [sol_dict[sorted_dict[i]][0], sol_dict[sorted_dict[i]][1]]
+            if pair[1] <= p_front[-1][1]:
+                p_front.append(pair)
+                p_front_sols.append(sorted_dict[i])
+        p_frontX = [pair[0] for pair in p_front]
+        p_frontY = [pair[1] for pair in p_front]
+
+        for t, e in p_frontX, p_frontY:
+            print(f'{t}, {e}')
+
                         
 
         with open('paretto_energy.txt', 'w') as fe:
-            for line in energy_paretto:
+            for line in p_front_sols:
                 fe.write(f'{line}\n')
 
-        with open('paretto_power.txt', 'w') as fp:
-            for line in power_paretto:
-                fp.write(f'{line}\n')
+        # with open('paretto_power.txt', 'w') as fp:
+        #     for line in power_paretto:
+        #         fp.write(f'{line}\n')
 
-        with open('paretto_area.txt', 'w') as fa:
-            for line in area_paretto:
-                fa.write(f'{line}\n')
+        # with open('paretto_area.txt', 'w') as fa:
+        #     for line in area_paretto:
+        #         fa.write(f'{line}\n')
 
         print(f'finished writing paretto files! There was {disregard_count} solution(s) that were disregarded')
         print('exiting...')
