@@ -30,6 +30,7 @@ from random import randint
 import random
 import numpy as np
 import re
+import matplotlib.pyplot as plt
 from utils.abstractSolutionsSaver import SolutionsSaver
 
 class RandomSearch(Heuristic):
@@ -41,6 +42,8 @@ class RandomSearch(Heuristic):
         self.successful_inst_count = 0
         self.solutionSaver = solutionSaver
         self.benchName = self.filesDict['benchName']
+        self._dir = self.filesDict['directory']
+        self.paretto_axis = self.filesDict['paretto_frontier']
         self.base_instances = self.filesDict['base_instances']
         self.filesDict = filesDict
         self.synthesisTimeLimit = int(filesDict['timeLimit'])
@@ -55,8 +58,8 @@ class RandomSearch(Heuristic):
             self.filter_dataset(self.benchName)
         elif self.filesDict['clean']:
             self.remove_unwanted_files(self.benchName)
-        elif self.filesDict['paretto_frontier'] != '':
-            self.paretto_frontier(self.benchName)
+        elif self.filesDict['paretto_frontier'] != 'None':
+            self.paretto_frontier(self.benchName, self._dir, self.paretto_axis)
             pass
         else:
             self.run()
@@ -65,23 +68,14 @@ class RandomSearch(Heuristic):
     def setTimeLimit(self,seconds):
         self._SECONDS = seconds
 
-
-    def _pf(Xs, Ys, maxX = False, maxY = False):
-        myList = sorted([[Xs[i], Ys[i]] for i in range(len(Xs))], reverse=maxX)
-        p_front = [myList[0]]    
-        for pair in myList[1:]:
-            if maxY: 
-                if pair[1] >= p_front[-1][1]:
-                    p_front.append(pair)
-            else:
-                if pair[1] <= p_front[-1][1]:
-                    p_front.append(pair)
-        p_frontX = [pair[0] for pair in p_front]
-        p_frontY = [pair[1] for pair in p_front]
-        return p_frontX, p_frontY
-
-    def paretto_frontier(self, bench, _dir = 'DATASETS'):
+    def paretto_frontier(self, bench, _dir = 'DATASETS', y_axis='energy'):
         cwd = os.getcwd()
+        is_filtered = False
+        power_file = 'impl/verilog/project.runs/impl_1/bd_0_wrapper_power_routed.rpt'
+        time_file = 'impl/verilog/project.runs/impl_1/bd_0_wrapper_timing_summary_routed.rpt'
+        area_file = 'impl/verilog/project.runs/impl_1/bd_0_wrapper_utilization_placed.rpt'
+        hls_file = 'syn/report/csynth.rpt'
+        print(f'directory: {_dir}')
         disregard_count = 0
         numeric_const_pattern = '[-+]? (?: (?: \d* \. \d+ ) | (?: \d+ \.? ) )(?: [Ee] [+-]? \d+ ) ?'
         rx = re.compile(numeric_const_pattern, re.VERBOSE)
@@ -93,9 +87,18 @@ class RandomSearch(Heuristic):
 
         #if not Path(f'{dir}/{bench}').is_dir():
         if not Path(os.path.join(cwd, _dir, bench)).is_dir():
-            print('ERROR: benchmark directory not found! Check if directory is correct or if benchmark is available.')
-            print('exiting...')
-            return
+            if not Path(os.path.join(cwd, _dir, 'filtered_'+bench)):
+                print('ERROR: benchmark directory not found! Check if directory is correct or if benchmark is available.')
+                print('exiting...')
+                return
+            else:
+                bench = 'filtered_'+bench+'/'+bench
+                print(f'found filtered version! ({bench})')
+                power_file = 'reports/impl_power.rpt'
+                time_file = 'reports/impl_timing_summary.rpt'
+                area_file = 'reports/impl_utilization_placed.rpt'
+                hls_file = 'reports/csynth.rpt'
+                is_filtered = True
         
         best_energy = 999999999999999999
         best_time = 9999999999999999999
@@ -119,6 +122,7 @@ class RandomSearch(Heuristic):
         np_cycle = np.array([])
         np_time = np.array([])
         np_energy = np.array([])
+        np_area = np.array([])
         for sol in solutions:
             disregard_sol = False
             is_already_disregarded = False
@@ -132,8 +136,8 @@ class RandomSearch(Heuristic):
             sol_cycles = -1
             sol_path = os.path.join(cwd, _dir, bench, sol)
             if Path(sol_path).is_dir():
-                if Path(f'{sol_path}/impl/verilog/project.runs/impl_1/bd_0_wrapper_utilization_placed.rpt').is_file():
-                    with open(f'{sol_path}/impl/verilog/project.runs/impl_1/bd_0_wrapper_utilization_placed.rpt', 'r') as f:
+                if Path(f'{sol_path}/{area_file}').is_file():
+                    with open(f'{sol_path}/{area_file}', 'r') as f:
                         lines = f.readlines()
                     for line in lines:
                         if line.find('CLB LUTs') != -1:
@@ -151,6 +155,7 @@ class RandomSearch(Heuristic):
 
                     sol_area = sol_lut/MAX_LUT + sol_ff/MAX_FF + sol_bram/MAX_BRAM + sol_dsp/MAX_DSP
                 else:
+                    print('area not found')
                     disregard_sol = True
                     if not is_already_disregarded:
                         is_already_disregarded = True
@@ -159,8 +164,8 @@ class RandomSearch(Heuristic):
                 
                 
 
-                if Path(f'{sol_path}/impl/verilog/project.runs/impl_1/bd_0_wrapper_timing_summary_routed.rpt').is_file():
-                    with open(f'{sol_path}/impl/verilog/project.runs/impl_1/bd_0_wrapper_timing_summary_routed.rpt', 'r') as f:
+                if Path(f'{sol_path}/{time_file}').is_file():
+                    with open(f'{sol_path}/{time_file}', 'r') as f:
                         is_first_occurrence = True
                         lines = f.readlines()
                     for line in lines:
@@ -169,26 +174,28 @@ class RandomSearch(Heuristic):
                             sol_period = float((rx.findall(line))[2])
                             #print(f'period found: {sol_period}')
                 else:
+                    print('time not found')
                     disregard_sol = True
                     if not is_already_disregarded:
                         is_already_disregarded = True
                         disregard_count = disregard_count + 1
 
-                if Path(f'{sol_path}/impl/verilog/project.runs/impl_1/bd_0_wrapper_power_routed.rpt').is_file():
-                    with open(f'{sol_path}/impl/verilog/project.runs/impl_1/bd_0_wrapper_power_routed.rpt', 'r') as f:
+                if Path(f'{sol_path}/{power_file}').is_file():
+                    with open(f'{sol_path}/{power_file}', 'r') as f:
                         lines = f.readlines()
                     for line in lines:
                         if line.find('Total On-Chip Power (W)') != -1:
                             sol_power = float((rx.findall(line))[0])
                             #print(f'power found: {sol_power}')
                 else:
+                    print('power not found')
                     disregard_sol = True
                     if not is_already_disregarded:
                         is_already_disregarded = True
                         disregard_count = disregard_count + 1
 
-                if Path(f'{sol_path}/syn/report/csynth.rpt').is_file():
-                    with open(f'{sol_path}/syn/report/csynth.rpt', 'r') as f:
+                if Path(f'{sol_path}/{hls_file}').is_file():
+                    with open(f'{sol_path}/{hls_file}', 'r') as f:
                         line_count = 0
                         lines = f.readlines()
                     for line in lines:
@@ -200,12 +207,19 @@ class RandomSearch(Heuristic):
                             sol_cycles = int((rx.findall(line))[1])
                             #print(f'cycle found: {sol_cycles}')
                 else:
+                    print('hls not found')
                     disregard_sol = True
                     if not is_already_disregarded:
                         is_already_disregarded = True
                         disregard_count = disregard_count + 1
 
                 sol_time = sol_cycles * sol_period
+                if sol_time < 0:
+                    print(f'{sol}: WARNING: negative time! ({sol_cycles}, {sol_period})')
+                    disregard_sol = True
+                    if not is_already_disregarded:
+                        is_already_disregarded = True
+                        disregard_count = disregard_count + 1
                 sol_energy = sol_power * sol_time
                 
 
@@ -213,43 +227,80 @@ class RandomSearch(Heuristic):
                     valid_sols_list.append(sol)
                     np_time = np.append(np_time, sol_time)
                     np_energy = np.append(np_energy, sol_energy)
+                    np_power = np.append(np_power, sol_power)
+                    np_area = np.append(np_area, sol_area)
+                else:
+                    print(f'solution {sol} discarted!')
                     
 
         sol_dict = dict()
+        np_y_paretto = np.array([])
+        if y_axis == 'energy':
+            np_y_paretto = np_energy
+        if y_axis == 'area':
+            np_y_paretto = np_area
+        if y_axis == 'power':
+            np_y_paretto = np_power
         for i in range(len(valid_sols_list)):
-            sol_dict[valid_sols_list[i]] = [np_time[i], np_energy[i]]
+            if not (np_time[i], np_y_paretto[i]) in sol_dict:
+                sol_dict[(np_time[i], np_y_paretto[i])] = [valid_sols_list[i]]
+            else:
+                sol_dict[(np_time[i], np_y_paretto[i])].append(valid_sols_list[i])
+                #sol_dict[valid_sols_list[i]] = [np_time[i], np_energy[i]]
 
-        sorted_dict = sorted([sol_dict[i] for i in sol_dict.keys()])
-        print(sorted_dict)
+        sorted_dict = sorted(sol_dict.keys(), key=lambda x: x[0])
+        sorted_energy = sorted(sol_dict.keys(), key=lambda x: x[1])
 
+        #print(sorted_energy)
 
-        p_front = [sol_dict[sorted_dict[0]]] #shortest time from solutions
-        p_front_sols = [sorted_dict[0]]
+        p_front = [sorted_dict[0]] #shortest time from solutions
+        p_front_sols = [sol_dict[sorted_dict[0]]]
         for index in range(len(sorted_dict)-1):
             i = index+1
-            pair = [sol_dict[sorted_dict[i]][0], sol_dict[sorted_dict[i]][1]]
+            pair = sorted_dict[i] #[sorted_dict[i][0], sorted_dict[i][1]]
             if pair[1] <= p_front[-1][1]:
                 p_front.append(pair)
-                p_front_sols.append(sorted_dict[i])
+                for _sol in sol_dict[sorted_dict[i]]:
+                    p_front_sols.append(_sol)
         p_frontX = [pair[0] for pair in p_front]
         p_frontY = [pair[1] for pair in p_front]
 
-        for t, e in p_frontX, p_frontY:
+        print(f'length of time: {len(p_frontX)}')
+        print(f'length of {y_axis}: {len(p_frontY)}')
+
+        for t, e in zip(p_frontX, p_frontY):
             print(f'{t}, {e}')
 
-                        
-
-        with open('paretto_energy.txt', 'w') as fe:
+        with open(f'paretto_{y_axis}.txt', 'w') as fe:
             for line in p_front_sols:
                 fe.write(f'{line}\n')
 
-        # with open('paretto_power.txt', 'w') as fp:
-        #     for line in power_paretto:
-        #         fp.write(f'{line}\n')
+        x_points = []
+        y_points = []
+        p_color = []
+        for x, y in sol_dict.keys():
+            x_points.append(x)
+            y_points.append(y)
+            if (x in p_frontX) and (y in p_frontY):
+                p_color.append('red')
+            else:
+                p_color.append('blue')
 
-        # with open('paretto_area.txt', 'w') as fa:
-        #     for line in area_paretto:
-        #         fa.write(f'{line}\n')
+        plt.scatter(x_points, y_points, c=p_color)
+        if y_axis == 'energy':
+            plt.title('energy-time paretto frontier')
+            plt.ylabel('energy (nJ)')
+        if y_axis == 'power':
+            plt.title('power-time paretto frontier')
+            plt.ylabel('power (W)')
+        if y_axis == 'area':
+            plt.title('area-time paretto frontier')
+            plt.ylabel('area (unra)')
+        plt.xlabel('time (ns)')
+        plt.savefig(f'{y_axis}_time.png')
+        plt.show()
+
+        
 
         print(f'finished writing paretto files! There was {disregard_count} solution(s) that were disregarded')
         print('exiting...')

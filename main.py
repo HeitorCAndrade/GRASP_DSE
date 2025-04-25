@@ -23,6 +23,7 @@ if __name__ == "__main__":
     with open('./benchmarks.json') as jsonFile:
         benchmarks:dict =  json.load(jsonFile)
     benchmarksList = list(benchmarks.keys())
+    paretto_list = ['power', 'energy', 'area']
     # Adding argument
     #only one of the two arguments in 'group' are required
     group = parser.add_mutually_exclusive_group(required=True)
@@ -45,7 +46,8 @@ if __name__ == "__main__":
     parser.add_argument("-f", "--filter", help = "filter the specified dataset, leaving only the reports,dcp files and directives on a new directory",required=False, nargs='?', const=1)
     parser.add_argument("-rpts", "--reports", help = "generate missing reports on the benchmark's instances that were succesful [WORK IN PROGRESS]",required=False, nargs='?', const=1)
     parser.add_argument("-cc", "--clean", help = "remove files from benchmark runs, leaving only IRs, reports and files from vivado project [WORK IN PROGRESS]",required=False, nargs='?', const=1)
-    parser.add_argument("-pf", "--paretto_frontier", help = "get all instances that forms the paretto frontier for that benchmark",required=False, nargs='?', const=1)
+    parser.add_argument("-pf", "--paretto_frontier", help = "get all instances that forms the paretto frontier for that benchmark",required=False, choices=paretto_list)
+    parser.add_argument("-dir", "--directory", help = "point directory where benchmark is located. Default is \"./DATASETS\"", required=False)
 
     filesDict = {}
     # Read arguments from command line
@@ -99,9 +101,14 @@ if __name__ == "__main__":
         filesDict['clean'] = False
 
     if args.paretto_frontier is not None:
-        filesDict['paretto_frontier'] = True
+        filesDict['paretto_frontier'] = args.paretto_frontier
     else:
-        filesDict['paretto_frontier'] = False
+        filesDict['paretto_frontier'] = 'None'
+
+    if args.directory is not None:
+        filesDict['directory'] = args.directory
+    else:
+        filesDict['directory'] = 'DATASETS'
     
     # hour = 3600
     # RESOURCE_TO_COMPARE = 'resources'
