@@ -20,9 +20,9 @@ def run_paretto_runs(dir_tcl):
         lines = []
         with open(os.path.join(cwd, 'script.tcl'), 'r') as f:
             lines = f.readlines()
-            for line in lines:
-                if line.find('open_solution') != -1:
-                    line = f'open_solution solution_mod_{sol_number}\n'
+            for i in range(len(lines)):
+                if lines[i].find('open_solution') != -1:
+                    lines[i] = f'open_solution solution_mod_{sol_number}\n'
                     #print(line)
         
         with open(os.path.join(cwd, 'script.tcl'), 'w') as f:
