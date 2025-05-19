@@ -13,7 +13,7 @@ def run_paretto_runs(dir_tcl):
     runs = os.listdir(path=os.path.join(cwd, dir_tcl))
     sol_number = 0
     for run in runs:
-        sol_number = (re.findall(r'\b\d+\b', run))[0]
+        sol_number = (re.findall(r'\d+', run))[0]
         subprocess.run(f'cp {os.path.join(cwd, dir_tcl, run)} .', shell=True)
         lines = []
         with open(os.path.join(cwd, 'script.tcl'), 'r') as f:
