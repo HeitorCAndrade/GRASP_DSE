@@ -60,13 +60,92 @@ class RandomSearch(Heuristic):
             self.remove_unwanted_files(self.benchName)
         elif self.filesDict['paretto_frontier'] != 'None':
             self.paretto_frontier(self.benchName, self._dir, self.paretto_axis)
-            pass
+        elif self.filesDict['retrieve_directives']:
+            self.retrieve_directives(self.benchName, self._dir)
         else:
             self.run()
 
 
     def setTimeLimit(self,seconds):
         self._SECONDS = seconds
+
+    def retrieve_directives(self, bench, _dir = './BENCHMARKS'):
+        is_filtered = False
+        json_path = './'
+        cwd = os.getcwd()
+        bench_name = bench
+
+        allowed_directives = ['set_directive_array_partition', 'set_directive_pipeline', 'set_directive_unroll']
+        if not Path(os.path.join(cwd, _dir, bench)).is_dir():
+            if not Path(os.path.join(cwd, _dir, 'filtered_'+bench)):
+                print('ERROR: benchmark directory not found! Check if directory is correct or if benchmark is available.')
+                print('exiting...')
+                return
+            else:
+                bench = 'filtered_'+bench+'/'+bench
+                
+                is_filtered = True
+
+        first_line = True
+        paretto_sols = {}
+        with open('paretto_energy.txt', 'r') as f:
+            lines = f.readlines()
+            for line in lines:
+                paretto_sols[f'{line[:-1]}'] = []
+
+        first_line = True
+        with open('paretto_area.txt', 'r') as f:
+            lines = f.readlines()
+            for line in lines:
+                if line not in paretto_sols:
+                    paretto_sols[f'{line[:-1]}'] = []
+
+     
+        with open('paretto_power.txt', 'r') as f:
+            lines = f.readlines()
+            for line in lines:
+                if line not in paretto_sols:
+                        paretto_sols[f'{line[:-1]}'] = []
+
+        print(paretto_sols.keys())
+        
+        for sol in paretto_sols.keys():
+            has_undesired_direct = False
+            directs = []
+            with open(os.path.join(cwd, _dir, bench, sol, f'{sol}_data.json'), 'r') as jf:
+                json_dict:dict = json.load(jf)
+                paretto_sols[sol] = json_dict['HlsSolution']['DirectiveTcl']
+
+            for direct in paretto_sols[sol]:
+                #if direct.find('set_directive_loop_flatten') == -1 and direct.find('set_directive_loop_merge') == -1 and direct.find('set_directive_top') == -1:
+                if direct.find('set_directive_pipeline') != -1:
+                    if direct.find('-off=true') != -1:
+                        subs = direct.split()
+                        direct = subs[0] + ' -off '+subs[1]
+                    directs.append(direct)
+
+                if direct.find('set_directive_array_partition') != -1:
+                    subs = direct.split()
+                    direct = subs[0]+' '+' '.join(subs[2:-1])+' '+subs[1]+' '+subs[-1]
+                    directs.append(direct)
+
+                if direct.find('set_directive_unroll') != -1:
+                    subs = direct.split()
+                    direct = subs[0]+' '+' '.join(subs[2:])+' '+subs[1]
+                    directs.append(direct)
+
+                if direct.find('set_directive_loop_flatten') != -1 or direct.find('set_directive_loop_merge') != -1:
+                    has_undesired_direct = True
+                    
+            print(has_undesired_direct)
+            if has_undesired_direct:
+                with open(os.path.join(cwd, f'{bench_name}_{sol}_mod.tcl'), 'w') as f:
+                    for d in directs:
+                        f.write(d)
+                        f.write('\n')
+                        
+            
+                    
 
     def paretto_frontier(self, bench, _dir = 'DATASETS', y_axis='energy'):
         cwd = os.getcwd()
@@ -104,6 +183,7 @@ class RandomSearch(Heuristic):
         best_time = 9999999999999999999
         best_power = 999999999999999999
         best_area = 5
+        target_period = 8.000
 
         valid_sols_list = []
         energy_paretto =  []
@@ -123,6 +203,7 @@ class RandomSearch(Heuristic):
         np_time = np.array([])
         np_energy = np.array([])
         np_area = np.array([])
+        np_wns = np.array([])
         for sol in solutions:
             disregard_sol = False
             is_already_disregarded = False
@@ -161,24 +242,29 @@ class RandomSearch(Heuristic):
                         is_already_disregarded = True
                         disregard_count = disregard_count + 1
 
-                
-                
-
                 if Path(f'{sol_path}/{time_file}').is_file():
                     with open(f'{sol_path}/{time_file}', 'r') as f:
-                        is_first_occurrence = True
+                        is_first_occurrence = 0
                         lines = f.readlines()
                     for line in lines:
-                        if line.find('ap_clk') != -1 and is_first_occurrence:
-                            is_first_occurrence = False
-                            sol_period = float((rx.findall(line))[2])
-                            #print(f'period found: {sol_period}')
+                        if line.find('ap_clk') != -1:
+                            if is_first_occurrence == 0:
+                                is_first_occurrence = is_first_occurrence + 1
+                                sol_period = float((rx.findall(line))[2])
+                            elif is_first_occurrence == 1:
+                                wns = float((rx.findall(line))[0])
+                                print(f'wns: {wns}')
+                                sol_period = sol_period - wns
+                                print(f'period found: {sol_period}\n')
+                                is_first_occurrence = is_first_occurrence + 1
+                        
                 else:
                     print('time not found')
                     disregard_sol = True
                     if not is_already_disregarded:
                         is_already_disregarded = True
                         disregard_count = disregard_count + 1
+
 
                 if Path(f'{sol_path}/{power_file}').is_file():
                     with open(f'{sol_path}/{power_file}', 'r') as f:
@@ -221,6 +307,8 @@ class RandomSearch(Heuristic):
                         is_already_disregarded = True
                         disregard_count = disregard_count + 1
                 sol_energy = sol_power * sol_time
+
+                sol_time = sol_time 
                 
 
                 if not disregard_sol:
@@ -254,7 +342,8 @@ class RandomSearch(Heuristic):
         #print(sorted_energy)
 
         p_front = [sorted_dict[0]] #shortest time from solutions
-        p_front_sols = [sol_dict[sorted_dict[0]]]
+        p_front_sols = [sol_dict[sorted_dict[0]][0]]
+        print(f'init sol: {sol_dict[sorted_dict[0]][0]}')
         for index in range(len(sorted_dict)-1):
             i = index+1
             pair = sorted_dict[i] #[sorted_dict[i][0], sorted_dict[i][1]]
@@ -268,9 +357,6 @@ class RandomSearch(Heuristic):
         print(f'length of time: {len(p_frontX)}')
         print(f'length of {y_axis}: {len(p_frontY)}')
 
-        for t, e in zip(p_frontX, p_frontY):
-            print(f'{t}, {e}')
-
         with open(f'paretto_{y_axis}.txt', 'w') as fe:
             for line in p_front_sols:
                 fe.write(f'{line}\n')
@@ -278,14 +364,32 @@ class RandomSearch(Heuristic):
         x_points = []
         y_points = []
         p_color = []
+        zord = []
+        is_mod = False
+        paretto_mod = False
         for x, y in sol_dict.keys():
-            x_points.append(x)
-            y_points.append(y)
+            is_mod = False
+            paretto_mod = False
+            for _s in sol_dict[(x, y)]:
+                if _s.find('_mod_') != -1:
+                    is_mod = True
+                    _s_split = _s.split('_mod_')
+                    _s_join = ''.join(_s_split)
+                    print(_s_join)
+                    if _s_join in p_front_sols:
+                        paretto_mod = True
+
+            if not is_mod or paretto_mod:
+                x_points.append(x)
+                y_points.append(y)
             if (x in p_frontX) and (y in p_frontY):
                 p_color.append('red')
-            else:
+            elif paretto_mod:
+                print('parettto mod added!')
+                p_color.append('green')
+            elif not is_mod:
                 p_color.append('blue')
-
+                
         plt.scatter(x_points, y_points, c=p_color)
         if y_axis == 'energy':
             plt.title('energy-time paretto frontier')
@@ -295,7 +399,7 @@ class RandomSearch(Heuristic):
             plt.ylabel('power (W)')
         if y_axis == 'area':
             plt.title('area-time paretto frontier')
-            plt.ylabel('area (unra)')
+            plt.ylabel('area (snru)')
         plt.xlabel('time (ns)')
         plt.savefig(f'{y_axis}_time.png')
         plt.show()
@@ -304,52 +408,6 @@ class RandomSearch(Heuristic):
 
         print(f'finished writing paretto files! There was {disregard_count} solution(s) that were disregarded')
         print('exiting...')
-
-
-                #check time x power, time x energy, energy x area, time x area
-
-
-    # def run_loop_dict(self, bench, loop_directive, dir = '.'):
-    #     print('WARNING: bases instances must be done before running this command!')
-    #     run = 1
-    #     if loop_directive == 'merge':
-    #         chosed_direct = 'loop_merge'
-    #     else:
-    #         chosed_direct = 'loop_flatten'
-
-    #     #directories = os.listdir(path=f'./DATASETS/{bench}')
-
-    #     #number of base runs to gather data
-    #     runs = 30
-    #     json_file = '/home/heitor/Masters/DATASET_GEN/solution2_data.json'
-    #     #first, extract directives from run
-        
-    #     to_read_run = 'solution'+str(run)
-    #     options = []
-    #     # for i in range(runs):
-    #     #     if Path(f'{dir}/{bench}').is_dir():
-    #     #         if Path(f'{dir}/{bench}/{to_read_run}/{to_read_run}_data.json').is_file():
-    #     with open(json_file, 'r') as jf:
-    #         sol_json:dict = json.load(jf)
-    #         #print(sol_json['HlsSolution']['DirectiveTcl'])
-    #     base_run_directives = sol_json['HlsSolution']['DirectiveTcl']
-
-    #     #get flatten or merge directives available
-    #     json_2 = f'./directives_files/aes.json'
-    #     with open(json_2, 'r') as jf:
-    #         directives_options:dict = json.load(jf)
-
-        
-    #     for d, c in directives_options['directives'].items():
-    #         if d.find(chosed_direct) != -1:
-    #             flatten_option = c['possible_directives'][1]
-    #             options.append(flatten_option)
-
-    #     #print(options)
-
-    #     #transform directives from solution + loop/merge into solution for script generation
-    #     final_directives = []
-    #     run = run + 1
 
 
     def copy_prj_files(self, benchName, sol):

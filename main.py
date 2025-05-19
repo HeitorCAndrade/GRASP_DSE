@@ -34,7 +34,6 @@ if __name__ == "__main__":
     parser.add_argument("-d", "--dFile", help = "Directives input file",required=False)
     parser.add_argument("-p", "--prjFile", help = "Prj. top file",required=False)
 
-    parser.add_argument("-o", "--saveFile", help = "name of save file",required=True)
     parser.add_argument("-model", "--estimationModel", help = "model used in heuristics for estimation of synthesis",required=False)
     parser.add_argument("-t", "--timeLimit", help = "time limit per dataset instance",required=True)
     parser.add_argument("-args", "--arguments", help = "arguments of heuristic",required=False, nargs='+')
@@ -48,6 +47,7 @@ if __name__ == "__main__":
     parser.add_argument("-cc", "--clean", help = "remove files from benchmark runs, leaving only IRs, reports and files from vivado project [WORK IN PROGRESS]",required=False, nargs='?', const=1)
     parser.add_argument("-pf", "--paretto_frontier", help = "get all instances that forms the paretto frontier for that benchmark",required=False, choices=paretto_list)
     parser.add_argument("-dir", "--directory", help = "point directory where benchmark is located. Default is \"./DATASETS\"", required=False)
+    parser.add_argument("-rd", "--retrieve_directives", help = "retrieve directives from paretto frontier (area, energy and power)", required=False, nargs='?', const=1)
 
     filesDict = {}
     # Read arguments from command line
@@ -66,8 +66,7 @@ if __name__ == "__main__":
         filesDict['benchName'] = args.benchmark
     filesDict['timeLimit'] = args.timeLimit
     filesDict['model'] = "./models/" + args.benchmark + "_MODEL"
-    #filesDict['heuristic'] = args.heuristic    
-    filesDict['saveFile'] = args.saveFile
+    #filesDict['heuristic'] = args.heuristic  
     filesDict['arguments'] = args.arguments
     filesDict['maxInstances'] = int(args.instances)
     if args.resume is not None:
@@ -110,6 +109,10 @@ if __name__ == "__main__":
     else:
         filesDict['directory'] = 'DATASETS'
     
+    if args.retrieve_directives is not None:
+        filesDict['retrieve_directives'] = True
+    else:
+        filesDict['retrieve_directives'] = False
     # hour = 3600
     # RESOURCE_TO_COMPARE = 'resources'
     # factory = RandomForestFactory(filesDict["dFile"])   
