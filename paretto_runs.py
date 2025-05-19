@@ -14,20 +14,21 @@ def run_paretto_runs(dir_tcl):
     sol_number = 0
     for run in runs:
         sol_number = (re.findall(r'\d+', run))[0]
-        subprocess.run(f'cp {os.path.join(cwd, dir_tcl, run)} .', shell=True)
+        subprocess.run(f'cp {os.path.join(cwd, dir_tcl, run)} ./directives.tcl', shell=True)
+        print(f'preparing run {sol_number}...')
+        print(f'copied directive file {os.path.join(cwd, dir_tcl, run)}')
         lines = []
         with open(os.path.join(cwd, 'script.tcl'), 'r') as f:
             lines = f.readlines()
             for line in lines:
                 if line.find('open_solution') != -1:
                     line = f'open_solution solution_mod_{sol_number}\n'
-                    print(line)
+                    #print(line)
         
         #with open(os.path.join(cwd, 'script.tcl'), 'w') as f:
         for line in lines:
-            print(line)
+            pass
             #f.write(line)
-        print(f'running with {run}...')
         #subprocess.run('vitis_hls -f script.tcl', shell=True)
 
     print('finished runs!')
