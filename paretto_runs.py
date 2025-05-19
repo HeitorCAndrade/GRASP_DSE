@@ -28,7 +28,7 @@ def run_paretto_runs(dir_tcl):
         with open(os.path.join(cwd, 'script.tcl'), 'w') as f:
             for line in lines:
                 f.write(line)
-        #subprocess.run('vitis_hls -f script.tcl', shell=True)
+        subprocess.run('vitis_hls -f script.tcl', shell=True)
 
     print('finished runs!')
         
