@@ -61,5 +61,5 @@ if __name__ == '__main__':
     dir_runs = input('run directory: ')
     dir_report = input('report directory: ')
 
-    #run_paretto_runs(dir_tcl)
+    run_paretto_runs(dir_tcl)
     copy_run_reports(dir_runs, dir_report)
