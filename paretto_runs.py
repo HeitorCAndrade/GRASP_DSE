@@ -14,7 +14,8 @@ def run_paretto_runs(dir_tcl):
     sol_number = 0
     for run in runs:
         print(f'run: {run}')
-        print(f'regex: {re.findall(r'\d+', run)}')
+        test = re.findall(r'\d+', run)
+        print(f'regex: {test}')
         sol_number = (re.findall(r'\d+', run))[0]
         subprocess.run(f'cp {os.path.join(cwd, dir_tcl, run)} ./directives.tcl', shell=True)
         print(f'preparing run {sol_number}...')
