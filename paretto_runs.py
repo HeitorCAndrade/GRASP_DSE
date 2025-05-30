@@ -22,6 +22,7 @@ def run_paretto_runs(dir_tcl):
             lines = f.readlines()
             for i in range(len(lines)):
                 if lines[i].find('open_solution') != -1:
+                    print(f'sol_number: {sol_number}')
                     lines[i] = f'open_solution solution_mod_{sol_number}\n'
                     #print(line)
         
