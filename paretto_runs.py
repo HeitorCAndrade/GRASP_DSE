@@ -50,13 +50,17 @@ def copy_run_reports(dir_runs, dir_report):
             to_dir = os.path.join(cwd, dir_report, run, 'reports/')
             print(f'to_dir: {to_dir}')
             os.makedirs(os.path.dirname(to_dir), exist_ok=True)
-            shutil.copyfile(from_dir+'bd_0_wrapper_power_routed.rpt', to_dir+'impl_power.rpt')
-            shutil.copyfile(from_dir+'bd_0_wrapper_utilization_placed.rpt', to_dir+'impl_utilization_placed.rpt')
-            shutil.copyfile(from_dir+'bd_0_wrapper_timing_summary_routed.rpt', to_dir+'impl_timing_summary.rpt')
+            if Path(from_dir+'bd_0_wrapper_power_routed.rpt').is_file():
+                shutil.copyfile(from_dir+'bd_0_wrapper_power_routed.rpt', to_dir+'impl_power.rpt')
+            if Path(from_dir+'bd_0_wrapper_utilization_placed.rpt').is_file():
+                shutil.copyfile(from_dir+'bd_0_wrapper_utilization_placed.rpt', to_dir+'impl_utilization_placed.rpt')
+            if Path(from_dir+'bd_0_wrapper_timing_summary_routed.rpt').is_file():
+                shutil.copyfile(from_dir+'bd_0_wrapper_timing_summary_routed.rpt', to_dir+'impl_timing_summary.rpt')
             from_dir = os.path.join(cwd, dir_runs, run, 'syn/report/')
             print(f'from_dir: {from_dir}')
             print(f'to_dir: {to_dir}')
-            shutil.copyfile(from_dir+'csynth.rpt', to_dir+'csynth.rpt')
+            if Path(from_dir+'csynth.rpt').is_file():
+                shutil.copyfile(from_dir+'csynth.rpt', to_dir+'csynth.rpt')
         else:
             print('dir not found!')
             print(Path(os.path.join(cwd, dir_runs, run, 'impl/verilog/project.runs/impl_1')))
@@ -65,6 +69,7 @@ if __name__ == '__main__':
     dir_tcl = input('tcl mod directory name: ')
     dir_runs = input('run directory: ')
     dir_report = input('report directory: ')
+
 
     run_paretto_runs(dir_tcl)
     copy_run_reports(dir_runs, dir_report)

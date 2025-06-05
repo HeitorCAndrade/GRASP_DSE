@@ -112,37 +112,38 @@ class RandomSearch(Heuristic):
         for sol in paretto_sols.keys():
             has_undesired_direct = False
             directs = []
-            with open(os.path.join(cwd, _dir, bench, sol, f'{sol}_data.json'), 'r') as jf:
-                json_dict:dict = json.load(jf)
-                paretto_sols[sol] = json_dict['HlsSolution']['DirectiveTcl']
+            if sol.find('_mod_') == -1:
+                with open(os.path.join(cwd, _dir, bench, sol, f'{sol}_data.json'), 'r') as jf:
+                    json_dict:dict = json.load(jf)
+                    paretto_sols[sol] = json_dict['HlsSolution']['DirectiveTcl']
 
-            for direct in paretto_sols[sol]:
-                #if direct.find('set_directive_loop_flatten') == -1 and direct.find('set_directive_loop_merge') == -1 and direct.find('set_directive_top') == -1:
-                if direct.find('set_directive_pipeline') != -1:
-                    if direct.find('-off=true') != -1:
+                for direct in paretto_sols[sol]:
+                    #if direct.find('set_directive_loop_flatten') == -1 and direct.find('set_directive_loop_merge') == -1 and direct.find('set_directive_top') == -1:
+                    if direct.find('set_directive_pipeline') != -1:
+                        if direct.find('-off=true') != -1:
+                            subs = direct.split()
+                            direct = subs[0] + ' -off '+subs[1]
+                        directs.append(direct)
+
+                    if direct.find('set_directive_array_partition') != -1:
                         subs = direct.split()
-                        direct = subs[0] + ' -off '+subs[1]
-                    directs.append(direct)
+                        direct = subs[0]+' '+' '.join(subs[2:-1])+' '+subs[1]+' '+subs[-1]
+                        directs.append(direct)
 
-                if direct.find('set_directive_array_partition') != -1:
-                    subs = direct.split()
-                    direct = subs[0]+' '+' '.join(subs[2:-1])+' '+subs[1]+' '+subs[-1]
-                    directs.append(direct)
+                    if direct.find('set_directive_unroll') != -1:
+                        subs = direct.split()
+                        direct = subs[0]+' '+' '.join(subs[2:])+' '+subs[1]
+                        directs.append(direct)
 
-                if direct.find('set_directive_unroll') != -1:
-                    subs = direct.split()
-                    direct = subs[0]+' '+' '.join(subs[2:])+' '+subs[1]
-                    directs.append(direct)
-
-                if direct.find('set_directive_loop_flatten') != -1 or direct.find('set_directive_loop_merge') != -1:
-                    has_undesired_direct = True
-                    
-            print(has_undesired_direct)
-            if has_undesired_direct:
-                with open(os.path.join(cwd, f'{bench_name}_{sol}_mod.tcl'), 'w') as f:
-                    for d in directs:
-                        f.write(d)
-                        f.write('\n')
+                    if direct.find('set_directive_loop_flatten') != -1 or direct.find('set_directive_loop_merge') != -1:
+                        has_undesired_direct = True
+                        
+                print(has_undesired_direct)
+                if has_undesired_direct:
+                    with open(os.path.join(cwd, f'{bench_name}_{sol}_mod.tcl'), 'w') as f:
+                        for d in directs:
+                            f.write(d)
+                            f.write('\n')
                         
             
                     
@@ -150,6 +151,7 @@ class RandomSearch(Heuristic):
     def paretto_frontier(self, bench, _dir = 'DATASETS', y_axis='energy'):
         cwd = os.getcwd()
         is_filtered = False
+        bench_name = bench
         power_file = 'impl/verilog/project.runs/impl_1/bd_0_wrapper_power_routed.rpt'
         time_file = 'impl/verilog/project.runs/impl_1/bd_0_wrapper_timing_summary_routed.rpt'
         area_file = 'impl/verilog/project.runs/impl_1/bd_0_wrapper_utilization_placed.rpt'
@@ -190,13 +192,15 @@ class RandomSearch(Heuristic):
         power_paretto =  []
         area_paretto =  []
         energy_area_paretto = []
-
+        mod_count = 0
         #solutions = os.listdir(path=f'{_dir}/{bench}')
         solutions = os.listdir(os.path.join(cwd, _dir, bench))
         np_lut = np.array([])
         np_ff = np.array([])
         np_bram = np.array([])
         np_dsp = np.array([])
+        np_dynP = np.array([])
+        np_staticP = np.array([])
         np_power = np.array([])
         np_latency = np.array([])
         np_cycle = np.array([])
@@ -204,7 +208,10 @@ class RandomSearch(Heuristic):
         np_energy = np.array([])
         np_area = np.array([])
         np_wns = np.array([])
+        print(f'sol count: {len(solutions)}')
         for sol in solutions:
+            if sol.find('_mod_') != -1:
+                mod_count = mod_count + 1
             disregard_sol = False
             is_already_disregarded = False
             #print('\n')
@@ -213,7 +220,10 @@ class RandomSearch(Heuristic):
             sol_bram = -1
             sol_dsp = -1
             sol_power = -1
+            sol_dyn = -1.0
+            sol_static = -1.0
             sol_period = -1.0
+            sol_target_period = -1
             sol_cycles = -1
             sol_path = os.path.join(cwd, _dir, bench, sol)
             if Path(sol_path).is_dir():
@@ -253,9 +263,10 @@ class RandomSearch(Heuristic):
                                 sol_period = float((rx.findall(line))[2])
                             elif is_first_occurrence == 1:
                                 wns = float((rx.findall(line))[0])
-                                print(f'wns: {wns}')
+                                #print(f'wns: {wns}')
+                                sol_target_period = sol_period
                                 sol_period = sol_period - wns
-                                print(f'period found: {sol_period}\n')
+                                #print(f'period found: {sol_period}\n')
                                 is_first_occurrence = is_first_occurrence + 1
                         
                 else:
@@ -272,7 +283,12 @@ class RandomSearch(Heuristic):
                     for line in lines:
                         if line.find('Total On-Chip Power (W)') != -1:
                             sol_power = float((rx.findall(line))[0])
+                        if line.find('Dynamic (W)') != -1:
+                            sol_dyn = float((rx.findall(line))[0])
                             #print(f'power found: {sol_power}')
+                        if line.find('Device Static (W)') != -1:
+                            sol_static = float((rx.findall(line))[0])
+
                 else:
                     print('power not found')
                     disregard_sol = True
@@ -290,7 +306,10 @@ class RandomSearch(Heuristic):
                         if line_count > 0:
                             line_count = line_count + 1
                         if line_count == 4:
-                            sol_cycles = int((rx.findall(line))[1])
+                            if bench_name == 'STENCIL3D':
+                                sol_cycles = int((rx.findall(line))[2])
+                            else:
+                                sol_cycles = int((rx.findall(line))[1])
                             #print(f'cycle found: {sol_cycles}')
                 else:
                     print('hls not found')
@@ -306,9 +325,12 @@ class RandomSearch(Heuristic):
                     if not is_already_disregarded:
                         is_already_disregarded = True
                         disregard_count = disregard_count + 1
+                
+                print(f'old power: {sol_power}')
+                sol_power = sol_dyn*sol_target_period/sol_period + sol_static
                 sol_energy = sol_power * sol_time
+                print(f'new power: {sol_power}')
 
-                sol_time = sol_time 
                 
 
                 if not disregard_sol:
@@ -339,7 +361,8 @@ class RandomSearch(Heuristic):
         sorted_dict = sorted(sol_dict.keys(), key=lambda x: x[0])
         sorted_energy = sorted(sol_dict.keys(), key=lambda x: x[1])
 
-        #print(sorted_energy)
+        print(f'mod count: {mod_count}')
+        
 
         p_front = [sorted_dict[0]] #shortest time from solutions
         p_front_sols = [sol_dict[sorted_dict[0]][0]]
@@ -379,26 +402,45 @@ class RandomSearch(Heuristic):
                     if _s_join in p_front_sols:
                         paretto_mod = True
 
-            if not is_mod or paretto_mod:
+            if not is_mod or paretto_mod or ((x in p_frontX) and (y in p_frontY)):
                 x_points.append(x)
                 y_points.append(y)
+            else:
+                pass
+                #print('sol NOT added: ')
+                #print(sol_dict[(x, y)])
+                #print('\n')
             if (x in p_frontX) and (y in p_frontY):
+                if not (not is_mod or paretto_mod):
+                    print('ERROR: color added to invalid pair! (red)')
+                    print(sol_dict[(x, y)])
+                    print('\n')
                 p_color.append('red')
             elif paretto_mod:
-                print('parettto mod added!')
+                print('paretto mod added!')
+                if not (not is_mod or paretto_mod):
+                    print('ERROR: color added to invalid pair! (green)')
+                    print(sol_dict[(x, y)])
+                    print('\n')
                 p_color.append('green')
             elif not is_mod:
+                if not (not is_mod or paretto_mod):
+                    print('ERROR: color added to invalid pair! (blue)')
+                    print(sol_dict[(x, y)])
+                    print('\n')
                 p_color.append('blue')
+            else:
+                print('unknown condition!')
                 
         plt.scatter(x_points, y_points, c=p_color)
         if y_axis == 'energy':
-            plt.title('energy-time paretto frontier')
+            plt.title(f'{bench_name} energy-time paretto frontier')
             plt.ylabel('energy (nJ)')
         if y_axis == 'power':
-            plt.title('power-time paretto frontier')
+            plt.title(f'{bench_name} power-time paretto frontier')
             plt.ylabel('power (W)')
         if y_axis == 'area':
-            plt.title('area-time paretto frontier')
+            plt.title(f'{bench_name} area-time paretto frontier')
             plt.ylabel('area (snru)')
         plt.xlabel('time (ns)')
         plt.savefig(f'{y_axis}_time.png')
