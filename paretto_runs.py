@@ -41,8 +41,10 @@ def run_paretto_runs(dir_tcl):
 def copy_run_reports(dir_runs, dir_report):
     cwd = os.getcwd()
     runs = os.listdir(path=os.path.join(cwd, dir_runs))
-
+    incomplete_runs = []
     for run in runs:
+        no_complete_reports = False
+        
         if Path(os.path.join(cwd, dir_runs, run, 'impl/verilog/project.runs/impl_1')).is_dir():
             
             from_dir = os.path.join(cwd, dir_runs, run, 'impl/verilog/project.runs/impl_1/')
@@ -52,18 +54,36 @@ def copy_run_reports(dir_runs, dir_report):
             os.makedirs(os.path.dirname(to_dir), exist_ok=True)
             if Path(from_dir+'bd_0_wrapper_power_routed.rpt').is_file():
                 shutil.copyfile(from_dir+'bd_0_wrapper_power_routed.rpt', to_dir+'impl_power.rpt')
+            else:
+                no_complete_reports = True
+                incomplete_runs.append(run)
             if Path(from_dir+'bd_0_wrapper_utilization_placed.rpt').is_file():
                 shutil.copyfile(from_dir+'bd_0_wrapper_utilization_placed.rpt', to_dir+'impl_utilization_placed.rpt')
+            else:
+                if not no_complete_reports:
+                    no_complete_reports = True
+                    incomplete_runs.append(run)
             if Path(from_dir+'bd_0_wrapper_timing_summary_routed.rpt').is_file():
                 shutil.copyfile(from_dir+'bd_0_wrapper_timing_summary_routed.rpt', to_dir+'impl_timing_summary.rpt')
+            else:
+                if not no_complete_reports:
+                    no_complete_reports = True
+                    incomplete_runs.append(run)
             from_dir = os.path.join(cwd, dir_runs, run, 'syn/report/')
             print(f'from_dir: {from_dir}')
             print(f'to_dir: {to_dir}')
             if Path(from_dir+'csynth.rpt').is_file():
                 shutil.copyfile(from_dir+'csynth.rpt', to_dir+'csynth.rpt')
+            else:
+                if not no_complete_reports:
+                    no_complete_reports = True
+                    incomplete_runs.append(run)
         else:
             print('dir not found!')
             print(Path(os.path.join(cwd, dir_runs, run, 'impl/verilog/project.runs/impl_1')))
+
+    for run in incomplete_runs:
+        print(f'run {run} is missing reports!')
 
 if __name__ == '__main__':
     dir_tcl = input('tcl mod directory name: ')
