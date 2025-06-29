@@ -84,14 +84,22 @@ void kernel_gramschmidt(int ni, int nj,
 //#pragma scop
   loop1: for (k = 0; k < _PB_NJ; k++)
     {
+      #pragma HLS loop_tripcount min=512 max=512 avg=512
       nrm = 0;
-      loop2: for (i = 0; i < _PB_NI; i++)
+      loop2: for (i = 0; i < _PB_NI; i++){
+        #pragma HLS loop_tripcount min=512 max=512 avg=512
         nrm += A[i][k] * A[i][k];
+      }
+        
       R[k][k] = sqrt(nrm);
-      loop3: for (i = 0; i < _PB_NI; i++)
+      loop3: for (i = 0; i < _PB_NI; i++){
+        #pragma HLS loop_tripcount min=512 max=512 avg=512
         Q[i][k] = A[i][k] / R[k][k];
+      }
+        
         loop4: for (j = k + 1; j < _PB_NJ; j++)
 	{
+    #pragma HLS loop_tripcount min=512 max=512 avg=512
 	  R[k][j] = 0;
 	  loop5: for (i = 0; i < _PB_NI; i++)
 	    R[k][j] += Q[i][k] * A[i][j];

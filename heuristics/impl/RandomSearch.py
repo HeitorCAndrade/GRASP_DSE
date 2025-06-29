@@ -156,6 +156,8 @@ class RandomSearch(Heuristic):
         time_file = 'impl/verilog/project.runs/impl_1/bd_0_wrapper_timing_summary_routed.rpt'
         area_file = 'impl/verilog/project.runs/impl_1/bd_0_wrapper_utilization_placed.rpt'
         hls_file = 'syn/report/csynth.rpt'
+        min_snru = 5
+        min_snru_sol = ''
         print(f'directory: {_dir}')
         disregard_count = 0
         numeric_const_pattern = '[-+]? (?: (?: \d* \. \d+ ) | (?: \d+ \.? ) )(?: [Ee] [+-]? \d+ ) ?'
@@ -245,6 +247,10 @@ class RandomSearch(Heuristic):
                             #print(f'dsp found: {sol_dsp}')
 
                     sol_area = sol_lut/MAX_LUT + sol_ff/MAX_FF + sol_bram/MAX_BRAM + sol_dsp/MAX_DSP
+                    if sol_area < min_snru:
+                        min_snru = sol_area
+                        min_snru_sol = sol
+                        print(f'updated min snru: {sol}')
                 else:
                     print('area not found')
                     disregard_sol = True
@@ -310,6 +316,8 @@ class RandomSearch(Heuristic):
                                 sol_cycles = int((rx.findall(line))[2])
                             else:
                                 sol_cycles = int((rx.findall(line))[1])
+                                if sol == 'solution214':
+                                    print(f'sol214: {sol_cycles}')
                             #print(f'cycle found: {sol_cycles}')
                 else:
                     print('hls not found')
@@ -326,10 +334,10 @@ class RandomSearch(Heuristic):
                         is_already_disregarded = True
                         disregard_count = disregard_count + 1
                 
-                print(f'old power: {sol_power}')
+                #print(f'old power: {sol_power}')
                 sol_power = sol_dyn*sol_target_period/sol_period + sol_static
                 sol_energy = sol_power * sol_time
-                print(f'new power: {sol_power}')
+                #print(f'new power: {sol_power}')
 
                 
 
