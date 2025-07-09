@@ -106,12 +106,12 @@ if __name__ == '__main__':
     dir_tcl = input('tcl mod directory name: ')
     dir_runs = input('run directory: ')
     dir_report = input('report directory: ')
-    hls_s = input('hls only? : y or n? ')
+    hls_s = input('hls only? : 1 or 0? ')
 
     input_valid = False
-    if hls_s == 'y':
+    if int(hls_s) == 1:
         hls = True
-    elif hls_s == 'n':
+    elif int(hls_s) == 0:
         hls = False
     else:
         input_valid = False
