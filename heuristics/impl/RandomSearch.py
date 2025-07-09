@@ -62,12 +62,73 @@ class RandomSearch(Heuristic):
             self.paretto_frontier(self.benchName, self._dir, self.paretto_axis)
         elif self.filesDict['retrieve_directives']:
             self.retrieve_directives(self.benchName, self._dir)
+        elif self.filesDict['retrieve_hls']:
+            self.retrieve_all(self.benchName, self._dir)
         else:
             self.run()
 
 
     def setTimeLimit(self,seconds):
         self._SECONDS = seconds
+
+    def retrieve_all(self, bench, _dir = './BENCHMARKS'):
+        is_filtered = False
+        json_path = './'
+        cwd = os.getcwd()
+        bench_name = bench
+
+        allowed_directives = ['set_directive_array_partition', 'set_directive_pipeline', 'set_directive_unroll']
+        if not Path(os.path.join(cwd, _dir, bench)).is_dir():
+            if not Path(os.path.join(cwd, _dir, 'filtered_'+bench)):
+                print('ERROR: benchmark directory not found! Check if directory is correct or if benchmark is available.')
+                print('exiting...')
+                return
+            else:
+                bench = 'filtered_'+bench+'/'+bench
+                
+                is_filtered = True
+            solution_dict = {}
+            sols = os.listdir(os.path.join(cwd, _dir, bench))
+        for sol in sols:
+            print(f'sol: {sol}')
+            directs = []
+            if sol.find('mod') == -1:
+                with open(os.path.join(cwd, _dir, bench, sol, f'{sol}_data.json'), 'r') as jf:
+                    json_dict:dict = json.load(jf)
+                    solution_dict[sol] = json_dict['HlsSolution']['DirectiveTcl']
+
+                for direct in solution_dict[sol]: 
+                    if direct.find('set_directive_pipeline') != -1:
+                        if direct.find('-off=true') != -1:
+                            subs = direct.split()
+                            direct = subs[0] + ' -off '+subs[1]
+                        directs.append(direct)
+
+                    if direct.find('set_directive_array_partition') != -1:
+                        subs = direct.split()
+                        direct = subs[0]+' '+' '.join(subs[2:-1])+' '+subs[1]+' '+subs[-1]
+                        directs.append(direct)
+
+                    if direct.find('set_directive_unroll') != -1:
+                        subs = direct.split()
+                        direct = subs[0]+' '+' '.join(subs[2:])+' '+subs[1]
+                        directs.append(direct)
+
+                    if direct.find('set_directive_loop_flatten') != -1:
+                        print(f'sol: {sol} has loop flatten!')
+                        directs.append(direct)
+
+                    if direct.find('set_directive_loop_merge') != -1:
+                        print(f'sol: {sol} has loop merge!')
+                        directs.append(direct)
+
+                with open(os.path.join(cwd, f'{bench_name}_{sol}_hls.tcl'), 'w') as f:
+                    for d in directs:
+                        f.write(d)
+                        f.write('\n')
+
+                    
+
 
     def retrieve_directives(self, bench, _dir = './BENCHMARKS'):
         is_filtered = False

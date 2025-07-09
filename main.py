@@ -48,6 +48,7 @@ if __name__ == "__main__":
     parser.add_argument("-pf", "--paretto_frontier", help = "get all instances that forms the paretto frontier for that benchmark",required=False, choices=paretto_list)
     parser.add_argument("-dir", "--directory", help = "point directory where benchmark is located. Default is \"./DATASETS\"", required=False)
     parser.add_argument("-rd", "--retrieve_directives", help = "retrieve directives from paretto frontier (area, energy and power)", required=False, nargs='?', const=1)
+    parser.add_argument("-hls", "--retrieve_hls", help = "retrieve directives for hls rerun", required=False, nargs='?', const=1)
 
     filesDict = {}
     # Read arguments from command line
@@ -113,6 +114,11 @@ if __name__ == "__main__":
         filesDict['retrieve_directives'] = True
     else:
         filesDict['retrieve_directives'] = False
+
+    if args.retrieve_hls is not None:
+        filesDict['retrieve_hls'] = True
+    else:
+        filesDict['retrieve_hls'] = False
     # hour = 3600
     # RESOURCE_TO_COMPARE = 'resources'
     # factory = RandomForestFactory(filesDict["dFile"])   
