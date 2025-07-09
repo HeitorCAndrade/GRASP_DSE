@@ -108,6 +108,7 @@ if __name__ == '__main__':
     dir_report = input('report directory: ')
     hls_s = input('hls only? : y or n')
 
+    input_valid = False
     if hls_s == 'y':
         hls = True
     elif hls_s == 'n':
