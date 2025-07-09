@@ -31,7 +31,10 @@ def run_paretto_runs(dir_tcl, hls_only=False):
             for i in range(len(lines)):
                 if lines[i].find('open_solution') != -1:
                     print(f'sol_number: {sol_number}')
-                    lines[i] = f'open_solution solution_mod_{sol_number}\n'
+                    if hls_only:
+                        lines[i] = f'open_solution solution_hls_{sol_number}\n'
+                    else:
+                        lines[i] = f'open_solution solution_mod_{sol_number}\n'
                     #print(line)
         
         with open(os.path.join(cwd, script_name), 'w') as f:
