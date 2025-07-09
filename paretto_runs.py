@@ -109,8 +109,10 @@ if __name__ == '__main__':
     hls_s = input('hls only? : 1 or 0? ')
 
     input_valid = False
+    hls = False
     if int(hls_s) == 1:
         hls = True
+        input_valid = True
     elif int(hls_s) == 0:
         hls = False
     else:
@@ -120,4 +122,5 @@ if __name__ == '__main__':
         run_paretto_runs(dir_tcl, hls)
         copy_run_reports(dir_runs, dir_report, hls)
     else:
+        print(type(int(hls_s)))
         print(f'ERROR: hls option should be y or n (value assigned: {hls_s})! Exiting...')
