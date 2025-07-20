@@ -4,7 +4,22 @@ import shutil
 from pathlib import Path
 import subprocess
 
-def run_paretto_runs(dir_tcl, hls_only=False):
+def verify_run_is_done(cwd, _dir, sol_number):
+    is_done = False
+    _path = os.path.join(cwd, _dir, f'solution_mod_{sol_number}')
+    if Path(_path).is_dir():
+        if Path(os.path.join(_path, 'impl/verilog/project.runs/impl_1')).is_dir():
+            impl_path = os.path.join(_path, 'impl/verilog/project.runs/impl_1/')
+            if Path(os.path.join(impl_path, 'bd_0_wrapper_power_routed.rpt')).is_file() and Path(os.path.join(impl_path, 'bd_0_wrapper_timing_summary_routed.rpt')).is_file() and Path(os.path.join(impl_path, 'bd_0_wrapper_utilization_placed.rpt')).is_file():
+                if Path(os.path.join(impl_path, 'runme.log')).is_file():
+                    with open(os.path.join(impl_path, 'runme.log'), 'r') as f:
+                        lines = f.readlines()
+                        for l in lines:
+                            if l.find('INFO: [Common 17-1381] The checkpoint') != -1 and l.find('has been generated') != -1:
+                                is_done = True
+    return is_done
+
+def run_paretto_runs(dir_tcl, dir_run, hls_only=False):
     cwd = os.getcwd()
     script_name = 'script.tcl'
     if hls_only:
@@ -16,7 +31,7 @@ def run_paretto_runs(dir_tcl, hls_only=False):
 
     runs = os.listdir(path=os.path.join(cwd, dir_tcl))
     sol_number = 0
-    for run in runs:
+    for run in runs:        
         print(f'run: {run}')
         if run.find('STENCIL3D') != -1:
             sol_number = (re.findall(r'\d+', run))[1]
@@ -26,21 +41,25 @@ def run_paretto_runs(dir_tcl, hls_only=False):
         print(f'preparing run {sol_number}...')
         print(f'copied directive file {os.path.join(cwd, dir_tcl, run)}')
         lines = []
-        with open(os.path.join(cwd, script_name), 'r') as f:
-            lines = f.readlines()
-            for i in range(len(lines)):
-                if lines[i].find('open_solution') != -1:
-                    print(f'sol_number: {sol_number}')
-                    if hls_only:
-                        lines[i] = f'open_solution solution_hls_{sol_number}\n'
-                    else:
-                        lines[i] = f'open_solution solution_mod_{sol_number}\n'
-                    #print(line)
-        
-        with open(os.path.join(cwd, script_name), 'w') as f:
-            for line in lines:
-                f.write(line)
-        subprocess.run(f'vitis_hls -f {script_name}', shell=True)
+        if not verify_run_is_done(cwd, dir_run, sol_number):
+            print(f'run {sol_number} not done yet!')
+            with open(os.path.join(cwd, script_name), 'r') as f:
+                lines = f.readlines()
+                for i in range(len(lines)):
+                    if lines[i].find('open_solution') != -1:
+                        print(f'sol_number: {sol_number}')
+                        if hls_only:
+                            lines[i] = f'open_solution solution_hls_{sol_number}\n'
+                        else:
+                            lines[i] = f'open_solution solution_mod_{sol_number}\n'
+                        #print(line)
+            
+            with open(os.path.join(cwd, script_name), 'w') as f:
+                for line in lines:
+                    f.write(line)
+            subprocess.run(f'vitis_hls -f {script_name}', shell=True)
+        else:
+            print(f'run {sol_number} already dome! skipping...')
 
     print('finished runs!')
 
@@ -119,7 +138,7 @@ if __name__ == '__main__':
         input_valid = False
 
     if input_valid:
-        run_paretto_runs(dir_tcl, hls)
+        run_paretto_runs(dir_tcl, dir_runs, hls)
         copy_run_reports(dir_runs, dir_report, hls)
     else:
         print(type(int(hls_s)))
