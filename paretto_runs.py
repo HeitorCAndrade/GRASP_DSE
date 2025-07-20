@@ -134,6 +134,7 @@ if __name__ == '__main__':
         input_valid = True
     elif int(hls_s) == 0:
         hls = False
+        input_valid = True
     else:
         input_valid = False
 
