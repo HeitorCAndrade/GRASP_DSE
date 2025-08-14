@@ -32,6 +32,8 @@ import numpy as np
 import re
 import matplotlib.pyplot as plt
 from utils.abstractSolutionsSaver import SolutionsSaver
+import seaborn as sns
+import pandas as pd
 
 class RandomSearch(Heuristic):
     
@@ -218,6 +220,11 @@ class RandomSearch(Heuristic):
         area_file = 'impl/verilog/project.runs/impl_1/bd_0_wrapper_utilization_placed.rpt'
         hls_file = 'syn/report/csynth.rpt'
         min_snru = 5
+        max_snru = 0
+        min_power = 99999
+        max_power = 0
+        min_time = 99999999999999999
+        max_time = 0
         min_snru_sol = ''
         print(f'directory: {_dir}')
         disregard_count = 0
@@ -242,6 +249,9 @@ class RandomSearch(Heuristic):
                 time_file = 'reports/impl_timing_summary.rpt'
                 area_file = 'reports/impl_utilization_placed.rpt'
                 hls_file = 'reports/csynth.rpt'
+                if bench_name == 'GRAMSCHMIDT':
+                    print('GRAMSCHMIDT uses different hls report!')
+                    hls_file = 'reports/csynth2.rpt'
                 is_filtered = True
         
         best_energy = 999999999999999999
@@ -288,30 +298,77 @@ class RandomSearch(Heuristic):
             sol_period = -1.0
             sol_target_period = -1
             sol_cycles = -1
+
+            lut_line_found = False
+            ff_line_found = False
+            bram_line_found = False
+            dsp_line_found = False
+
             sol_path = os.path.join(cwd, _dir, bench, sol)
             if Path(sol_path).is_dir():
                 if Path(f'{sol_path}/{area_file}').is_file():
                     with open(f'{sol_path}/{area_file}', 'r') as f:
                         lines = f.readlines()
                     for line in lines:
-                        if line.find('CLB LUTs') != -1:
+                        if line.find('CLB LUTs') != -1 and not lut_line_found:
                             sol_lut = int((rx.findall(line))[0])
+                            lut_line_found = True
+                            # if sol == 'solution466':
+                            #     print(f'lut line:')
+                            #     print(line)
+                            #     print(f'extracted value: {sol_lut}')
+                            #     print('----------------------------------------------------------------------------------')
                             #print(f'lut found: {sol_lut}')
-                        if line.find('CLB Registers') != -1:
+                        if line.find('CLB Registers') != -1 and not ff_line_found:
                             sol_ff = int((rx.findall(line))[0])
+                            ff_line_found = True
+                            # if sol == 'solution466':
+                            #     print(f'ff line:')
+                            #     print(line)
+                            #     print(f'extracted value: {sol_ff}')
+                            #     print('----------------------------------------------------------------------------------')
                             #print(f'ff found: {sol_ff}')
-                        if line.find('Block RAM Tile') != -1:
+                        if line.find('Block RAM Tile') != -1 and not bram_line_found:
                             sol_bram = float((rx.findall(line))[0])
+                            bram_line_found = True
+                            # if sol == 'solution466':
+                            #     print(f'bram line:')
+                            #     print(line)
+                            #     print(f'extracted value: {sol_bram}')
+                            #     print('----------------------------------------------------------------------------------')
                             #print(f'bram found: {sol_bram}')
-                        if line.find(' DSPs') != -1:
+                        if line.find(' DSPs') != -1 and not dsp_line_found:
                             sol_dsp = int((rx.findall(line))[0])
+                            dsp_line_found = True
+                            # if sol == 'solution466':
+                            #     print(f'dsp line:')
+                            #     print(line)
+                            #     print(f'extracted value: {sol_dsp}')
+                            #     print('----------------------------------------------------------------------------------')
                             #print(f'dsp found: {sol_dsp}')
 
                     sol_area = sol_lut/MAX_LUT + sol_ff/MAX_FF + sol_bram/MAX_BRAM + sol_dsp/MAX_DSP
+                    if sol_area > max_snru:
+                        max_snru = sol_area
+
+                    temp_lut = -1.0
+                    temp_ff = -1.0
+                    temp_bram = -1.0
+                    temp_dsp = -1.0
+
                     if sol_area < min_snru:
                         min_snru = sol_area
                         min_snru_sol = sol
-                        print(f'updated min snru: {sol}')
+                        print(f'updated min snru: {min_snru}, from sol: {sol}')
+                        print(f'LUT FF BRAM DSP:')
+                        print(f'{sol_lut} / {MAX_LUT} + {sol_ff} / {MAX_FF} + {sol_bram} / {MAX_BRAM} + {sol_dsp} / {MAX_DSP}')
+                        temp_lut = sol_lut/MAX_LUT
+                        temp_ff = sol_ff/MAX_FF
+                        temp_bram = sol_bram/MAX_BRAM
+                        temp_dsp = sol_dsp/MAX_DSP
+                        print(f'temp results: {temp_lut} + {temp_ff} + {temp_bram}+ {temp_dsp}')
+                        print(f'{temp_lut+temp_ff+temp_bram+temp_dsp} should equal {min_snru}')
+                        print(f'###############################################################################')
                 else:
                     print('area not found')
                     disregard_sol = True
@@ -394,11 +451,22 @@ class RandomSearch(Heuristic):
                     if not is_already_disregarded:
                         is_already_disregarded = True
                         disregard_count = disregard_count + 1
+                else:
+                    if sol_time < min_time:
+                        min_time = sol_time
+
+                    if sol_time > max_time:
+                        max_time = sol_time
                 
                 #print(f'old power: {sol_power}')
                 sol_power = sol_dyn*sol_target_period/sol_period + sol_static
                 sol_energy = sol_power * sol_time
                 #print(f'new power: {sol_power}')
+                if sol_power > max_power:
+                    max_power = sol_power
+
+                if sol_power < min_power:
+                    min_power = sol_power
 
                 
 
@@ -484,24 +552,28 @@ class RandomSearch(Heuristic):
                     print('ERROR: color added to invalid pair! (red)')
                     print(sol_dict[(x, y)])
                     print('\n')
-                p_color.append('red')
+                p_color.append('paretto frontier')
             elif paretto_mod:
                 print('paretto mod added!')
                 if not (not is_mod or paretto_mod):
                     print('ERROR: color added to invalid pair! (green)')
                     print(sol_dict[(x, y)])
                     print('\n')
-                p_color.append('green')
+                p_color.append('loop directive removed')
             elif not is_mod:
                 if not (not is_mod or paretto_mod):
                     print('ERROR: color added to invalid pair! (blue)')
                     print(sol_dict[(x, y)])
                     print('\n')
-                p_color.append('blue')
+                p_color.append('')
             else:
                 print('unknown condition!')
                 
-        plt.scatter(x_points, y_points, c=p_color)
+        sns.set_theme()
+        #df = pd.Dataframe()
+        sns.color_palette("Spectral", as_cmap=True)
+        sns.scatterplot(x=x_points, y=y_points, hue=p_color, s=18, palette=['blue', 'red', 'seagreen'])
+        #plt.scatter(x_points, y_points, c=p_color)
         if y_axis == 'energy':
             plt.title(f'{bench_name} energy-time paretto frontier')
             plt.ylabel('energy (nJ)')
@@ -512,11 +584,14 @@ class RandomSearch(Heuristic):
             plt.title(f'{bench_name} area-time paretto frontier')
             plt.ylabel('area (snru)')
         plt.xlabel('time (ns)')
-        plt.savefig(f'{y_axis}_time.png')
+        plt.savefig(f'{bench_name}_{y_axis}_time.pdf')
         plt.show()
 
         
 
+        print(f'min snru found: {min_snru}, max snru found: {max_snru}')
+        print(f'min power found: {min_power}, max power found: {max_power}')
+        print(f'min time found: {min_time}, max time found: {max_time}')
         print(f'finished writing paretto files! There was {disregard_count} solution(s) that were disregarded')
         print('exiting...')
 

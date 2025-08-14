@@ -4,6 +4,17 @@ import shutil
 from pathlib import Path
 import subprocess
 
+AES = {'name': 'AES', 'files': 'add_files {../GRASP_DSE/benchmarks/aes/aes_enc.c ../GRASP_DSE/benchmarks/aes/aes.c ../GRASP_DSE/benchmarks/aes/aes_dec.c}', 'top': 'set_top aes_main', 'dict': 'open_project AES_FIX_MOD_RUNS'}
+ADPCM = {'name': 'ADPCM', 'files': 'add_files {../GRASP_DSE/benchmarks/adpcm/adpcm.c}', 'top': 'set_top adpcm_main', 'dict': 'open_project ADPCM_FIX_MOD_RUNS'}
+BACKPROP = {'name': 'BACKPROP', 'files': 'add_files {../GRASP_DSE/benchmarks/backprop/backprop.c}', 'top': 'set_top backprop', 'dict': 'open_project BACKPROP_FIX_MOD_RUNS'}
+GEMM = {'name': 'GEMM', 'files': 'add_files {../GRASP_DSE/benchmarks/gemm/gemm.c}', 'top': 'set_top bbgemm', 'dict': 'open_project GEMM_FIX_MOD_RUNS'}
+GSM = {'name': 'GSM', 'files': 'add_files {../GRASP_DSE/benchmarks/gsm/gsm_add.c ../GRASP_DSE/benchmarks/gsm/gsm.c ../GRASP_DSE/benchmarks/gsm/gsm_lpc.c}', 'top': 'set_top Gsm_LPC_Analysis', 'dict': 'open_project GSM_FIX_MOD_RUNS'}
+KNN = {'name': 'KNN', 'files': 'add_files {../GRASP_DSE/benchmarks/knn/md.c}', 'top': 'set_top md_kernel', 'dict': 'open_project KNN_FIX_MOD_RUNS'}
+SHA = {'name': 'SHA', 'files': 'add_files {../GRASP_DSE/benchmarks/sha/sha.c}', 'top': 'set_top sha_stream', 'dict': 'open_project SHA_FIX_MOD_RUNS'}
+STENCIL3D = {'name': 'STENCIL3D', 'files': 'add_files {../GRASP_DSE/benchmarks/stencil3d/stencil.c}', 'top': 'set_top stencil3d', 'dict': 'open_project STENCIL3D_FIX_MOD_RUNS'}
+
+DICT_LIST = [AES, ADPCM, BACKPROP, GEMM, GSM, KNN, SHA, STENCIL3D]
+
 def verify_run_is_done(cwd, _dir, sol_number):
     is_done = False
     _path = os.path.join(cwd, _dir, f'solution_mod_{sol_number}')
@@ -121,6 +132,80 @@ def copy_run_reports(dir_runs, dir_report, hls_only=False):
     for run in incomplete_runs:
         print(f'run {run} is missing reports!')
 
+def run_missing_fix_runs(hls_dir, dest_dir, reports_dir):
+    cwd = os.getcwd()
+    if not Path(os.path.join(cwd, hls_dir)).is_dir():
+        print(f'ERROR: hls_dir {hls_dir} not found!')
+        return -1
+    if not Path(os.path.join(cwd, dest_dir)).is_dir():
+        print(f'ERROR: dest_dir {dest_dir} not found!')
+        return -1 
+    if not Path(os.path.join(cwd, reports_dir)).is_dir():
+        print(f'ERROR: reports_dir {reports_dir} not found!')
+        return -1 
+
+    print('starting runs...')
+    hls_exist = True
+    for _dict in DICT_LIST:
+        bench_name = _dict['name']
+        current_dict = _dict['dict']
+        current_top = _dict['top']
+        current_files = _dict['files']
+        print(f'starting {bench_name}...')
+        hls_exist = True
+        if not Path(os.path.join(cwd, dest_dir, bench_name)).is_dir():
+            print(f'INFO: creating run directory for {bench_name}...')
+            Path(os.path.join(cwd, dest_dir, bench_name)).mkdir()
+        run_path = os.path.join(cwd, dest_dir, bench_name)
+
+        if not Path(os.path.join(cwd, reports_dir, bench_name)).is_dir():
+            print(f'INFO: creating report directory for {bench_name}...')
+            Path(os.path.join(cwd, reports_dir, bench_name)).mkdir()
+        rep_path = os.path.join(cwd, reports_dir, bench_name)
+
+        if not Path(os.path.join(cwd, hls_dir, bench_name)).is_dir():
+            print(f'ERROR: hls directory not found for {bench_name}! Skipping...')
+            hls_exist = False
+        hls_path = os.path.join(cwd, hls_dir, bench_name)
+
+        if hls_exist:
+            lines = []
+            run_dict_index = -1
+            files_index = -1
+            main_func_index = -1
+            with open(os.path.join(cwd, 'script.tcl'), 'r') as f:
+                lines = f.readlines()
+                for i, l in zip(range(len(lines)), lines):
+                    if l.find('open_project') != -1:
+                        run_dict_index = i
+                    if l.find('set_top') != -1:
+                        main_func_index = i
+                    if l.find('add_files') != -1:
+                        files_index = i
+            
+            print('INFO: script reading done')
+            with open(os.path.join(cwd, 'script.tcl'), 'w') as f:
+                lines[run_dict_index] = f'{current_dict}'
+                lines[main_func_index] = f'{current_top}'
+                lines[files_index] = f'{current_files}'
+                for l in lines:
+                    f.write(l)
+                    f.write('\n')
+            print('INFO: script writing done')
+
+            run_paretto_runs(hls_path, run_path, 0)
+            print('INFO: finished run')
+            copy_run_reports(run_path, rep_path, 0)
+            print('INFO: finished report copying')
+
+    print('INFO: finished all runs!')
+
+
+
+            
+
+        
+
 if __name__ == '__main__':
     dir_tcl = input('tcl mod directory name: ')
     dir_runs = input('run directory: ')
@@ -138,9 +223,10 @@ if __name__ == '__main__':
     else:
         input_valid = False
 
-    if input_valid:
-        run_paretto_runs(dir_tcl, dir_runs, hls)
-        copy_run_reports(dir_runs, dir_report, hls)
+    run_missing_fix_runs(dir_tcl, dir_runs, dir_report)
+    #if input_valid:
+    #    run_paretto_runs(dir_tcl, dir_runs, hls)
+    #    copy_run_reports(dir_runs, dir_report, hls)
     else:
         print(type(int(hls_s)))
         print(f'ERROR: hls option should be y or n (value assigned: {hls_s})! Exiting...')
