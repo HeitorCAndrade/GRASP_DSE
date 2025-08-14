@@ -228,5 +228,5 @@ if __name__ == '__main__':
     #    run_paretto_runs(dir_tcl, dir_runs, hls)
     #    copy_run_reports(dir_runs, dir_report, hls)
     #else:
-        print(type(int(hls_s)))
-        print(f'ERROR: hls option should be y or n (value assigned: {hls_s})! Exiting...')
+    print(type(int(hls_s)))
+    print(f'ERROR: hls option should be y or n (value assigned: {hls_s})! Exiting...')
