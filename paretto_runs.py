@@ -4,16 +4,17 @@ import shutil
 from pathlib import Path
 import subprocess
 
-AES = {'name': 'AES', 'files': 'add_files {../GRASP_DSE/benchmarks/aes/aes_enc.c ../GRASP_DSE/benchmarks/aes/aes.c ../GRASP_DSE/benchmarks/aes/aes_dec.c}', 'top': 'set_top aes_main', 'dict': 'open_project AES_FIX_MOD_RUNS'}
-ADPCM = {'name': 'ADPCM', 'files': 'add_files {../GRASP_DSE/benchmarks/adpcm/adpcm.c}', 'top': 'set_top adpcm_main', 'dict': 'open_project ADPCM_FIX_MOD_RUNS'}
-BACKPROP = {'name': 'BACKPROP', 'files': 'add_files {../GRASP_DSE/benchmarks/backprop/backprop.c}', 'top': 'set_top backprop', 'dict': 'open_project BACKPROP_FIX_MOD_RUNS'}
-GEMM = {'name': 'GEMM', 'files': 'add_files {../GRASP_DSE/benchmarks/gemm/gemm.c}', 'top': 'set_top bbgemm', 'dict': 'open_project GEMM_FIX_MOD_RUNS'}
-GSM = {'name': 'GSM', 'files': 'add_files {../GRASP_DSE/benchmarks/gsm/gsm_add.c ../GRASP_DSE/benchmarks/gsm/gsm.c ../GRASP_DSE/benchmarks/gsm/gsm_lpc.c}', 'top': 'set_top Gsm_LPC_Analysis', 'dict': 'open_project GSM_FIX_MOD_RUNS'}
-KNN = {'name': 'KNN', 'files': 'add_files {../GRASP_DSE/benchmarks/knn/md.c}', 'top': 'set_top md_kernel', 'dict': 'open_project KNN_FIX_MOD_RUNS'}
-SHA = {'name': 'SHA', 'files': 'add_files {../GRASP_DSE/benchmarks/sha/sha.c}', 'top': 'set_top sha_stream', 'dict': 'open_project SHA_FIX_MOD_RUNS'}
-STENCIL3D = {'name': 'STENCIL3D', 'files': 'add_files {../GRASP_DSE/benchmarks/stencil3d/stencil.c}', 'top': 'set_top stencil3d', 'dict': 'open_project STENCIL3D_FIX_MOD_RUNS'}
+AES = {'name': 'AES', 'files': 'add_files {../GRASP_DSE/benchmarks/aes/aes_enc.c ../GRASP_DSE/benchmarks/aes/aes.c ../GRASP_DSE/benchmarks/aes/aes_dec.c}', 'top': 'set_top aes_main', 'dict': 'open_project MOD_FIX_RUNS/AES_FIX_MOD_RUNS'}
+ADPCM = {'name': 'ADPCM', 'files': 'add_files {../GRASP_DSE/benchmarks/adpcm/adpcm.c}', 'top': 'set_top adpcm_main', 'dict': 'open_project MOD_FIX_RUNS/ADPCM_FIX_MOD_RUNS'}
+BACKPROP = {'name': 'BACKPROP', 'files': 'add_files {../GRASP_DSE/benchmarks/backprop/backprop.c}', 'top': 'set_top backprop', 'dict': 'open_project MOD_FIX_RUNS/BACKPROP_FIX_MOD_RUNS'}
+GEMM = {'name': 'GEMM', 'files': 'add_files {../GRASP_DSE/benchmarks/gemm/gemm.c}', 'top': 'set_top bbgemm', 'dict': 'open_project MOD_FIX_RUNS/GEMM_FIX_MOD_RUNS'}
+GSM = {'name': 'GSM', 'files': 'add_files {../GRASP_DSE/benchmarks/gsm/gsm_add.c ../GRASP_DSE/benchmarks/gsm/gsm.c ../GRASP_DSE/benchmarks/gsm/gsm_lpc.c}', 'top': 'set_top Gsm_LPC_Analysis', 'dict': 'open_project MOD_FIX_RUNS/GSM_FIX_MOD_RUNS'}
+KNN = {'name': 'KNN', 'files': 'add_files {../GRASP_DSE/benchmarks/knn/md.c}', 'top': 'set_top md_kernel', 'dict': 'open_project MOD_FIX_RUNS/KNN_FIX_MOD_RUNS'}
+SHA = {'name': 'SHA', 'files': 'add_files {../GRASP_DSE/benchmarks/sha/sha.c}', 'top': 'set_top sha_stream', 'dict': 'open_project MOD_FIX_RUNS/SHA_FIX_MOD_RUNS'}
+STENCIL3D = {'name': 'STENCIL3D', 'files': 'add_files {../GRASP_DSE/benchmarks/stencil3d/stencil.c}', 'top': 'set_top stencil3d', 'dict': 'open_project MOD_FIX_RUNS/STENCIL3D_FIX_MOD_RUNS'}
 
-DICT_LIST = [AES, ADPCM, BACKPROP, GEMM, GSM, KNN, SHA, STENCIL3D]
+DICT_LIST = [ADPCM, GEMM, GSM, KNN, SHA, STENCIL3D]
+#DICT_LIST = [ADPCM, GEMM]
 
 def verify_run_is_done(cwd, _dir, sol_number):
     is_done = False
@@ -173,24 +174,40 @@ def run_missing_fix_runs(hls_dir, dest_dir, reports_dir):
             run_dict_index = -1
             files_index = -1
             main_func_index = -1
+            i = 0
             with open(os.path.join(cwd, 'script.tcl'), 'r') as f:
                 lines = f.readlines()
-                for i, l in zip(range(len(lines)), lines):
+                for l in lines:
                     if l.find('open_project') != -1:
+                        #print(f'open_project: {i}')
                         run_dict_index = i
                     if l.find('set_top') != -1:
+                        #print(f'set_top: {i}')
                         main_func_index = i
                     if l.find('add_files') != -1:
+                        #print(f'add_files: {i}')
                         files_index = i
+                    i=i+1
             
             print('INFO: script reading done')
             with open(os.path.join(cwd, 'script.tcl'), 'w') as f:
-                lines[run_dict_index] = f'{current_dict}'
-                lines[main_func_index] = f'{current_top}'
-                lines[files_index] = f'{current_files}'
+                lines[run_dict_index] = f'{current_dict}\n'
+                #print(f'current_dict')
+                #print(current_dict)
+                #print('########################################')
+                lines[main_func_index] = f'{current_top}\n'
+                #print(f'current_top')
+                #print(current_top)
+                #print('########################################')
+                lines[files_index] = f'{current_files}\n'
+                #print(f'current_files')
+                #print(current_files)
+                #print('########################################')
+                i = 0
                 for l in lines:
+                    #print(l)
                     f.write(l)
-                    f.write('\n')
+                    #f.write('\n')
             print('INFO: script writing done')
 
             run_paretto_runs(hls_path, run_path, 0)
@@ -228,5 +245,5 @@ if __name__ == '__main__':
     #    run_paretto_runs(dir_tcl, dir_runs, hls)
     #    copy_run_reports(dir_runs, dir_report, hls)
     #else:
-    print(type(int(hls_s)))
-    print(f'ERROR: hls option should be y or n (value assigned: {hls_s})! Exiting...')
+    #print(type(int(hls_s)))
+    #print(f'ERROR: hls option should be y or n (value assigned: {hls_s})! Exiting...')
