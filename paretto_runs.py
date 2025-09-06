@@ -228,7 +228,7 @@ def extract_rtl_files(src_dir, dest_dir, bench):
     dest_path = os.path.join(cwd, dest_dir, bench)
 
     runs = os.listdir(src_path)
-    Path(dest_path).mkdir()
+    Path(dest_path).mkdir(exist_ok=True)
 
     for run in runs:
         if Path(os.path.join(src_path, run, 'syn/verilog')).is_dir():
