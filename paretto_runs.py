@@ -235,6 +235,7 @@ def extract_rtl_files(src_dir, dest_dir, bench):
             rtl_files = os.listdir(os.path.join(src_path, run, 'syn/verilog'))
             for rtl in rtl_files:
                 rtl_path = os.path.join(src_path, run, 'syn/verilog', rtl)
+                os.makedirs(os.path.dirname(os.path.join(dest_path, run, 'rtl')), exist_ok=True)
                 shutil.copy(rtl_path, os.path.join(dest_path, run, 'rtl'))
         else:
             error_path = os.path.join(src_path, run, 'syn/verilog')
