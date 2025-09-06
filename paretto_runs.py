@@ -217,30 +217,57 @@ def run_missing_fix_runs(hls_dir, dest_dir, reports_dir):
 
     print('INFO: finished all runs!')
 
+def extract_rtl_files(src_dir, dest_dir, bench):
+    print(f'starting verilog extraction of {bench}')
+    cwd = os.getcwd()
+    src_path = os.path.join(cwd, src_dir, bench)
+    if not Path(src_path).is_dir():
+        print(f'ERROR: source directory not found! Directory given: {src_path}')
+        return -1
+    
+    dest_path = os.path.join(cwd, dest_dir, bench)
+
+    runs = os.listdir(src_path)
+    Path(dest_path).mkdir()
+
+    for run in runs:
+        if Path(os.path.join(src_path, run, 'syn/verilog')).is_dir():
+            rtl_files = os.listdir(os.path.join(src_path, run, 'syn/verilog'))
+            for rtl in rtl_files:
+                rtl_path = os.path.join(src_path, run, 'syn/verilog', rtl)
+                shutil.copy(rtl_path, os.path.join(dest_path, run, 'rtl'))
+        else:
+            error_path = os.path.join(src_path, run, 'syn/verilog')
+            print(f'ERROR: path not found! Path given: {error_path}')
 
 
-            
+         
 
         
 
 if __name__ == '__main__':
-    dir_tcl = input('tcl mod directory name: ')
-    dir_runs = input('run directory: ')
-    dir_report = input('report directory: ')
-    hls_s = input('hls only? : 1 or 0? ')
+    src_dir = input('source directory: ')
+    dest_dir = input('destination directory: ')
+    bench = input('benchmark name: ')
 
-    input_valid = False
-    hls = False
-    if int(hls_s) == 1:
-        hls = True
-        input_valid = True
-    elif int(hls_s) == 0:
-        hls = False
-        input_valid = True
-    else:
-        input_valid = False
+    extract_rtl_files(src_dir, dest_dir, bench)
+    #dir_tcl = input('tcl mod directory name: ')
+    #dir_runs = input('run directory: ')
+    #dir_report = input('report directory: ')
+    #hls_s = input('hls only? : 1 or 0? ')
 
-    run_missing_fix_runs(dir_tcl, dir_runs, dir_report)
+    # input_valid = False
+    # hls = False
+    # if int(hls_s) == 1:
+    #     hls = True
+    #     input_valid = True
+    # elif int(hls_s) == 0:
+    #     hls = False
+    #     input_valid = True
+    # else:
+    #     input_valid = False
+
+    # run_missing_fix_runs(dir_tcl, dir_runs, dir_report)
     #if input_valid:
     #    run_paretto_runs(dir_tcl, dir_runs, hls)
     #    copy_run_reports(dir_runs, dir_report, hls)
