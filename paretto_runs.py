@@ -239,7 +239,13 @@ def extract_rtl_files(src_dir, dest_dir, bench):
             for rtl in rtl_files:
                 rtl_path = os.path.join(src_path, run, 'syn/verilog', rtl)
                 rtl_dest_path = os.path.join(dest_path, run, 'rtl', rtl)
-                shutil.copy(rtl_path, rtl_dest_path)
+                if Path(os.path.join(dest_path, run, 'rtl')).is_dir():
+                    if len(os.listdir(os.path.join(dest_path, run, 'rtl'))) != 0:
+                        print(f'WARNING: non empty folder for solution {run} already exists. Skipping...')
+                    else:
+                        shutil.copy(rtl_path, rtl_dest_path)
+                else:
+                    shutil.copy(rtl_path, rtl_dest_path)
         else:
             error_path = os.path.join(src_path, run, 'syn/verilog')
             print(f'ERROR: path not found! Path given: {error_path}')
