@@ -232,20 +232,18 @@ def extract_rtl_files(src_dir, dest_dir, bench):
 
     for run in runs:
         if Path(os.path.join(src_path, run, 'syn/verilog')).is_dir():
-            rtl_files = os.listdir(os.path.join(src_path, run, 'syn/verilog'))
-            #os.makedirs(os.path.dirname(os.path.join(dest_path, run, 'rtl')), exist_ok=True)
-            rtl_dir_path = os.path.join(dest_path, run, 'rtl')
-            Path(rtl_dir_path).mkdir(parents=True, exist_ok=True)
-            for rtl in rtl_files:
-                rtl_path = os.path.join(src_path, run, 'syn/verilog', rtl)
-                rtl_dest_path = os.path.join(dest_path, run, 'rtl', rtl)
-                if Path(os.path.join(dest_path, run, 'rtl')).is_dir():
-                    if len(os.listdir(os.path.join(dest_path, run, 'rtl'))) != 0:
-                        print(f'WARNING: non empty folder for solution {run} already exists. Skipping...')
-                    else:
-                        shutil.copy(rtl_path, rtl_dest_path)
-                else:
+            if not Path(os.path.join(dest_path, run, 'rtl')).is_dir() or (Path(os.path.join(dest_path, run, 'rtl')).is_dir() and len(os.listdir(os.path.join(dest_path, run, 'rtl'))) == 0):
+                rtl_files = os.listdir(os.path.join(src_path, run, 'syn/verilog'))
+                #os.makedirs(os.path.dirname(os.path.join(dest_path, run, 'rtl')), exist_ok=True)
+                rtl_dir_path = os.path.join(dest_path, run, 'rtl')
+                Path(rtl_dir_path).mkdir(parents=True, exist_ok=True)
+                for rtl in rtl_files:
+                    rtl_path = os.path.join(src_path, run, 'syn/verilog', rtl)
+                    rtl_dest_path = os.path.join(dest_path, run, 'rtl', rtl)
+                    
                     shutil.copy(rtl_path, rtl_dest_path)
+            else:
+                print(f'WARNING: non empty folder for solution {run} already exists. Skipping...')
         else:
             error_path = os.path.join(src_path, run, 'syn/verilog')
             print(f'ERROR: path not found! Path given: {error_path}')
