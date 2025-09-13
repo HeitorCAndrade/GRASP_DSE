@@ -33,10 +33,11 @@ import re
 import matplotlib.pyplot as plt
 from utils.abstractSolutionsSaver import SolutionsSaver
 import seaborn as sns
+import seaborn.objects as so
 import pandas as pd
 
 class RandomSearch(Heuristic):
-    
+    PARETTO_DATASETS = ['filtered_adpcm/ADPCM', 'filtered_aes/AES', 'filtered_backprop/BACKPROP', 'filtered_gemm/GEMM', 'filtered_gsm/GSM', 'filtered_sha/SHA', 'filtered_knn/KNN', 'filtered_gramschmidt/GRAMSCHMIDT', 'filtered_TRANS_FFT/TRANS_FFT', 'filtered_stencil3d/STENCIL3D']
     def __init__(self,filesDict,timeLimit=3600,solutionSaver:SolutionsSaver = None):
         super().__init__(filesDict)
         self.sol_exists = False
@@ -66,6 +67,8 @@ class RandomSearch(Heuristic):
             self.retrieve_directives(self.benchName, self._dir)
         elif self.filesDict['retrieve_hls']:
             self.retrieve_all(self.benchName, self._dir)
+        elif self.filesDict['build_graphs']:
+            self.build_dataframe(self._dir)
         else:
             self.run()
 
@@ -571,21 +574,21 @@ class RandomSearch(Heuristic):
                 
         sns.set_theme()
         #df = pd.Dataframe()
-        sns.color_palette("Spectral", as_cmap=True)
-        sns.scatterplot(x=x_points, y=y_points, hue=p_color, s=18, palette=['blue', 'red', 'seagreen'])
+        #sns.color_palette("Spectral", as_cmap=True)
+        #sns.scatterplot(x=x_points, y=y_points, hue=p_color, s=18, palette=['blue', 'red', 'seagreen'])
         #plt.scatter(x_points, y_points, c=p_color)
-        if y_axis == 'energy':
-            plt.title(f'{bench_name} energy-time paretto frontier')
-            plt.ylabel('energy (nJ)')
-        if y_axis == 'power':
-            plt.title(f'{bench_name} power-time paretto frontier')
-            plt.ylabel('power (W)')
-        if y_axis == 'area':
-            plt.title(f'{bench_name} area-time paretto frontier')
-            plt.ylabel('area (snru)')
-        plt.xlabel('time (ns)')
-        plt.savefig(f'{bench_name}_{y_axis}_time.pdf')
-        plt.show()
+        #if y_axis == 'energy':
+            #plt.title(f'{bench_name} energy-time paretto frontier')
+            #plt.ylabel('energy (nJ)')
+       # if y_axis == 'power':
+           # plt.title(f'{bench_name} power-time paretto frontier')
+            #plt.ylabel('power (W)')
+        #if y_axis == 'area':
+            #plt.title(f'{bench_name} area-time paretto frontier')
+            #plt.ylabel('area (snru)')
+       # plt.xlabel('time (ns)')
+       # plt.savefig(f'{bench_name}_{y_axis}_time.pdf')
+        #plt.show()
 
         
 
@@ -594,6 +597,141 @@ class RandomSearch(Heuristic):
         print(f'min time found: {min_time}, max time found: {max_time}')
         print(f'finished writing paretto files! There was {disregard_count} solution(s) that were disregarded')
         print('exiting...')
+
+    def build_dataframe(self, _dir, save=True, file_name= 'stacked_bar_graph.pdf'):
+        cwd = os.getcwd()
+        data_dict = {}
+        if not Path(os.path.join(cwd, _dir)).is_dir():
+            print(f'ERROR: {_dir} directory not found!')
+            return -1
+        else:
+            dir_path = os.path.join(cwd, _dir)
+
+        # df = pd.DataFrame({
+        #     'bench':[],
+        #     'total_mods':[],
+        #     'kept_mods':[],
+        #     'removed_mods':[],
+        # })
+        #df.set_index(list(df)[0])
+        for bench in self.PARETTO_DATASETS:
+            print(f'running application {bench}...')
+            bench_path = os.path.join(dir_path, bench)
+            if Path(bench_path).is_dir():
+                bench_name = bench.split('/')
+                self.paretto_frontier(bench_name[1], dir_path, 'area')
+                self.paretto_frontier(bench_name[1], dir_path, 'energy')
+                self.paretto_frontier(bench_name[1], dir_path, 'power')
+                lines_area = []
+                lines_power = []
+                lines_energy = []
+                sol_dirs = os.listdir(bench_path)
+                with open('paretto_area.txt', 'r') as f:
+                    lines_area = f.readlines()
+                with open('paretto_power.txt', 'r') as f:
+                    lines_power = f.readlines()
+                with open('paretto_energy.txt', 'r') as f:
+                    lines_energy = f.readlines()
+
+                os.system(f'cp paretto_area.txt {bench_name[1]}_paretto_area.txt')
+                os.system(f'cp paretto_power.txt {bench_name[1]}_paretto_power.txt')
+                os.system(f'cp paretto_energy.txt {bench_name[1]}_paretto_energy.txt')
+                sum_lines = lines_area
+                for l in lines_power:
+                    if l not in sum_lines:
+                        sum_lines.append(l)
+                for l in lines_energy:
+                    if l not in sum_lines:
+                        sum_lines.append(l)
+
+                total_mod_sol_number = 0
+                total_removed_mod_sol = 0
+                total_kept_mod_sol = 0
+                total_paretto = len(sum_lines)
+                #get number of mod solutions
+                for d in sol_dirs:
+                    if d.find('_mod_') != -1:
+                        total_mod_sol_number = total_mod_sol_number + 1
+                        
+                print(f'found {total_mod_sol_number} mod sol numbers!')
+                for l in sum_lines:
+                    l_str = l.split('\n')
+                    if l_str[0].find('_mod_') != -1:
+                        total_kept_mod_sol = total_kept_mod_sol + 1
+                        #total_paretto = total_paretto - 1
+                total_removed_mod_sol = total_mod_sol_number - total_kept_mod_sol
+                print(f'found {total_kept_mod_sol} kept mod solutions')
+                print(f'found {total_removed_mod_sol} removed mod solutions')
+                print(f'found {total_paretto} paretto solutions')
+                if bench_name[1] != 'GRAMSCHMIDT': #bench_name[1] != 'TRANS_FFT' and 
+                    data_dict[bench_name[1]] = [total_mod_sol_number, total_kept_mod_sol, total_removed_mod_sol, total_paretto]
+
+                #df.loc[bench_name] = [total_mod_sol_number, total_kept_mod_sol, total_removed_mod_sol]
+
+                #build stacked bar graph
+                #save graph as PDF
+
+            else:
+                print(f'WARNING: {bench} directory not found! Path input: {bench_path}')
+
+        df = pd.DataFrame.from_dict(data_dict, orient='index', columns=['Total modified solutions', 'Stayed in Pareto front', 'Left Pareto front', 'Pareto front size'])
+        df['Application'] = df.index
+        #sns.set_theme(style="darkgrid")
+        #so.Plot(df["Application"], df["Total modified solutions"]).add(so.Bar(), so.Hist())
+        # for k in data_dict.keys():
+        #     print('showing results...')
+        #     print(f'{k}: total: {data_dict[k][0]} kept: {data_dict[k][1]} discarded: {data_dict[k][2]}')
+
+        print('#################################')
+        print(df)
+        df_pct = df.copy()
+        # df_pct = df[["Application", "Stayed in Paretto front", "Left Paretto front", "Paretto front size"]].copy()
+        # df_pct[["Stayed in Paretto front", "Left Paretto front", "Paretto front size"]] = df_pct[["Stayed in Paretto front", "Left Paretto front", "Paretto front size"]].div(
+        #     df_pct[["Paretto front size", "Paretto front size", "Paretto front size"]].sum(axis=1), axis=0
+        # ) * 100
+
+        df_pct["Stayed in Pareto front"] = df["Stayed in Pareto front"] / df["Pareto front size"] * 100
+        df_pct["Left Pareto front"] = df["Left Pareto front"] / df["Pareto front size"] * 100
+
+        df_pct["Do not have target directives"] = 100 - (df_pct["Stayed in Pareto front"] + df_pct["Left Pareto front"])
+
+        stayed_avg = df_pct.loc[:, 'Left Pareto front'].mean()
+
+        df_long = df_pct.melt( #era df.melt
+            id_vars="Application",
+            value_vars=["Stayed in Pareto front", "Left Pareto front", "Do not have target directives"],
+            var_name="Type",
+            value_name="Percentage"
+        )
+        pivoted = df_long.pivot(index="Application", columns="Type", values="Percentage")
+        custom_colors = ["#777b7e", "#4169e1", "#d30000"]  #grey=777b7e red=d30000 blue=4169e1
+        # Plot stacked bars
+        pivoted.plot(
+            kind="bar",
+            stacked=True,
+            figsize=(18, 6),
+            color=custom_colors
+        )
+        plt.legend(
+            #title="Label",
+            fontsize=20,        # size of the labels inside the legend
+            title_fontsize=20,   # size of the legend title
+            bbox_to_anchor=(0.5, -0.1),
+            ncol=3
+        )
+        plt.xticks(rotation=0, fontsize=16)   # x-axis labels
+        plt.yticks(fontsize=16)               # y-axis labels
+        plt.ylabel("Percentage", fontsize=18)
+        plt.xlabel("Application", fontsize=18)
+        #plt.title("Solutions with merge or flatten directives uppon their removal", fontsize=20) #, weight="bold"
+        plt.legend(ncol=3, bbox_to_anchor=(0.7, 1.05)) #title="Type", 
+        if save:
+            plt.savefig(file_name, bbox_inches="tight")
+        #sns.despine()
+        plt.show()
+        print(f'percentage avg: {stayed_avg}')
+
+        
 
 
     def copy_prj_files(self, benchName, sol):

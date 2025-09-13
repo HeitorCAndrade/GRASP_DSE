@@ -49,6 +49,7 @@ if __name__ == "__main__":
     parser.add_argument("-dir", "--directory", help = "point directory where benchmark is located. Default is \"./DATASETS\"", required=False)
     parser.add_argument("-rd", "--retrieve_directives", help = "retrieve directives from paretto frontier (area, energy and power)", required=False, nargs='?', const=1)
     parser.add_argument("-hls", "--retrieve_hls", help = "retrieve directives for hls rerun", required=False, nargs='?', const=1)
+    parser.add_argument("-bg", "--build_graphs", help = "build paretto points graphs (currently only stacked bat graphs)", required=False, nargs='?', const=1)
 
     filesDict = {}
     # Read arguments from command line
@@ -119,6 +120,11 @@ if __name__ == "__main__":
         filesDict['retrieve_hls'] = True
     else:
         filesDict['retrieve_hls'] = False
+
+    if args.build_graphs is not None:
+        filesDict['build_graphs'] = True
+    else:
+        filesDict['build_graphs'] = False
     # hour = 3600
     # RESOURCE_TO_COMPARE = 'resources'
     # factory = RandomForestFactory(filesDict["dFile"])   
