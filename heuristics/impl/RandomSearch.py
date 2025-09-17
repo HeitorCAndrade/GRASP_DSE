@@ -706,25 +706,37 @@ class RandomSearch(Heuristic):
         pivoted = df_long.pivot(index="Application", columns="Type", values="Percentage")
         custom_colors = ["#777b7e", "#4169e1", "#d30000"]  #grey=777b7e red=d30000 blue=4169e1
         # Plot stacked bars
-        pivoted.plot(
+        ax = pivoted.plot(
             kind="bar",
             stacked=True,
             figsize=(18, 6),
             color=custom_colors
         )
+
+        for container in ax.containers:
+            ax.bar_label(
+                container,
+                fmt="%.0f%%",  
+                label_type="center",  
+                fontsize=12,   
+                #fontweight="bold",
+                color="white" if container.patches[0].get_facecolor() != (0.827,0.827,0.827,1.0) else "black"  
+            )
+
         plt.legend(
             #title="Label",
-            fontsize=20,        # size of the labels inside the legend
-            title_fontsize=20,   # size of the legend title
-            bbox_to_anchor=(0.5, -0.1),
+            fontsize=20,        
+            title_fontsize=20,  
+            bbox_to_anchor=(0.7, -0.1),
             ncol=3
         )
-        plt.xticks(rotation=0, fontsize=16)   # x-axis labels
-        plt.yticks(fontsize=16)               # y-axis labels
+        
+        plt.xticks(rotation=0, fontsize=16)   
+        plt.yticks(fontsize=16)               
         plt.ylabel("Percentage", fontsize=18)
         plt.xlabel("Application", fontsize=18)
-        #plt.title("Solutions with merge or flatten directives uppon their removal", fontsize=20) #, weight="bold"
-        plt.legend(ncol=3, bbox_to_anchor=(0.7, 1.05)) #title="Type", 
+        
+        plt.legend(ncol=3, bbox_to_anchor=(0.75, 1.05)) 
         if save:
             plt.savefig(file_name, bbox_inches="tight")
         #sns.despine()

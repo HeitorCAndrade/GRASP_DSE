@@ -7,13 +7,14 @@ import subprocess
 AES = {'name': 'AES', 'files': 'add_files {../GRASP_DSE/benchmarks/aes/aes_enc.c ../GRASP_DSE/benchmarks/aes/aes.c ../GRASP_DSE/benchmarks/aes/aes_dec.c}', 'top': 'set_top aes_main', 'dict': 'open_project MOD_FIX_RUNS/AES_FIX_MOD_RUNS'}
 ADPCM = {'name': 'ADPCM', 'files': 'add_files {../GRASP_DSE/benchmarks/adpcm/adpcm.c}', 'top': 'set_top adpcm_main', 'dict': 'open_project MOD_FIX_RUNS/ADPCM_FIX_MOD_RUNS'}
 BACKPROP = {'name': 'BACKPROP', 'files': 'add_files {../GRASP_DSE/benchmarks/backprop/backprop.c}', 'top': 'set_top backprop', 'dict': 'open_project MOD_FIX_RUNS/BACKPROP_FIX_MOD_RUNS'}
-GEMM = {'name': 'GEMM', 'files': 'add_files {../GRASP_DSE/benchmarks/gemm/gemm.c}', 'top': 'set_top bbgemm', 'dict': 'open_project MOD_FIX_RUNS/GEMM_FIX_MOD_RUNS'}
+GEMM = {'name': 'GEMM', 'files': 'add_files {./benchmarks/gemm/gemm.c}', 'top': 'set_top bbgemm', 'dict': 'open_project MOD_FIX_RUNS/GEMM_FIX_MOD_RUNS'}
 GSM = {'name': 'GSM', 'files': 'add_files {../GRASP_DSE/benchmarks/gsm/gsm_add.c ../GRASP_DSE/benchmarks/gsm/gsm.c ../GRASP_DSE/benchmarks/gsm/gsm_lpc.c}', 'top': 'set_top Gsm_LPC_Analysis', 'dict': 'open_project MOD_FIX_RUNS/GSM_FIX_MOD_RUNS'}
 KNN = {'name': 'KNN', 'files': 'add_files {../GRASP_DSE/benchmarks/knn/md.c}', 'top': 'set_top md_kernel', 'dict': 'open_project MOD_FIX_RUNS/KNN_FIX_MOD_RUNS'}
-SHA = {'name': 'SHA', 'files': 'add_files {../GRASP_DSE/benchmarks/sha/sha.c}', 'top': 'set_top sha_stream', 'dict': 'open_project MOD_FIX_RUNS/SHA_FIX_MOD_RUNS'}
-STENCIL3D = {'name': 'STENCIL3D', 'files': 'add_files {../GRASP_DSE/benchmarks/stencil3d/stencil.c}', 'top': 'set_top stencil3d', 'dict': 'open_project MOD_FIX_RUNS/STENCIL3D_FIX_MOD_RUNS'}
+SHA = {'name': 'SHA', 'files': 'add_files {./benchmarks/sha/sha.c}', 'top': 'set_top sha_stream', 'dict': 'open_project MOD_FIX_RUNS/SHA_FIX_MOD_RUNS'}
+STENCIL3D = {'name': 'STENCIL3D', 'files': 'add_files {./benchmarks/stencil3d/stencil.c}', 'top': 'set_top stencil3d', 'dict': 'open_project MOD_FIX_RUNS/STENCIL3D_FIX_MOD_RUNS'}
+TRANS_FFT = {'name': 'TRANS_FFT', 'files': 'add_files {./benchmarks/transposed_fft/transposed_fft.c}', 'top': 'set_top fft1D_512', 'dict': 'open_project MOD_FIX_RUNS/STENCIL3D_FIX_MOD_RUNS'}
 
-DICT_LIST = [ADPCM, GEMM, GSM, KNN, SHA, STENCIL3D]
+DICT_LIST = [GEMM, SHA, STENCIL3D, TRANS_FFT, ADPCM, BACKPROP, AES, KNN, GSM]
 #DICT_LIST = [ADPCM, GEMM]
 
 def verify_run_is_done(cwd, _dir, sol_number):
@@ -248,17 +249,206 @@ def extract_rtl_files(src_dir, dest_dir, bench):
             error_path = os.path.join(src_path, run, 'syn/verilog')
             print(f'ERROR: path not found! Path given: {error_path}')
 
+def create_dataset_directory(_dir, _adb_name, _rtl_name, _dest_name):
+    app_list = ['GEMM', 'GRAMSCHMIDT', 'GSM', 'KNN', 'SHA', 'STENCIL3D', 'TRANS_FFT'] #'ADPCM', 'AES', 'BACKPROP', 
+    no_adb_dict = {}
+    no_rtl_dict = {}
+    cwd = os.getcwd()
+    src_path = os.path.join(cwd, _dir)
+    rtl_path = os.path.join(cwd, _dir, _rtl_name)
+    adb_path = os.path.join(cwd, _dir, _adb_name)
 
-         
+    if not Path(src_path).is_dir():
+        print(f'ERROR: specified dir {src_path} not found! Exiting...')
+        return -1
+    if not Path(rtl_path).is_dir():
+        print(f'ERROR: specified rtl dir {rtl_path} not found! Exiting...')
+        return -1
+    if not Path(adb_path).is_dir():
+        print(f'ERROR: specified adb dir {adb_path} not found! Exiting...')
+        return -1
+
+    dest_path = os.path.join(cwd, _dir, _dest_name)
+    Path(dest_path).mkdir(parents=True, exist_ok=True)
+
+    for app in app_list:
+        print(f'Starting {app}...')
+        app_path = os.path.join(dest_path, app)
+        if not Path(app_path).is_dir():
+            Path(app_path).mkdir(parents=True)
+
+        filtered_path = os.path.join(src_path, f'filtered_{app.lower()}', app)
+        sols = os.listdir(os.path.join(filtered_path))
+        no_adbs = []
+        no_rtl = []
+        for sol in sols:
+            if sol.find('_mod_') == -1:
+                has_adbs = True
+                has_rtl = True
+                #filtered dataset files..
+                sol_path = os.path.join(filtered_path, sol)
+                dest_sol_path = os.path.join(dest_path, app, sol)
+                shutil.copytree(os.path.join(sol_path, 'IRs'), os.path.join(dest_sol_path, 'IRs'), dirs_exist_ok=True)
+                shutil.copytree(os.path.join(sol_path, 'reports'), os.path.join(dest_sol_path, 'reports'), dirs_exist_ok=True)
+                shutil.copy(os.path.join(sol_path, f'{sol}.directive'), os.path.join(dest_sol_path, f'{sol}.directive'))
+                shutil.copy(os.path.join(sol_path, f'{sol}_data.json'), os.path.join(dest_sol_path, f'{sol}_data.json'))
+
+                Path(os.path.join(dest_sol_path, 'rtl')).mkdir(parents=True, exist_ok=True)
+                Path(os.path.join(dest_sol_path, 'adb')).mkdir(parents=True, exist_ok=True)
+            
+                #adb files...
+                if Path(os.path.join(src_path, _adb_name, app, sol, 'IRs')).is_dir():
+                    adb_file_path = os.path.join(src_path, _adb_name, app, sol, 'IRs')
+                    adb_files = os.listdir(adb_file_path)
+                elif Path(os.path.join(src_path, _adb_name, app, sol, '.autopilot/db')).is_dir():
+                    adb_file_path = os.path.join(src_path, _adb_name, app, sol, '.autopilot/db')
+                    adb_files = os.listdir(adb_file_path)
+                else:
+                    has_adbs = False
+                    first_path = os.path.join(src_path, _adb_name, app, sol, 'IRs')
+                    second_path = os.path.join(src_path, _adb_name, app, sol, '.autopilot/db')
+                    print(f'ERROR: adb path not found! Tried {first_path} and {second_path}')
+                
+                if has_adbs:
+                    for adb in adb_files:
+                        shutil.copy(os.path.join(adb_file_path, adb), os.path.join(dest_sol_path, 'adb', adb))
+                else:
+                    print(f'WARNING: no adb files for solution {sol} in benchmark {app}')
+                    no_adbs.append(sol)
+        
+                #RTL files...
+                if Path(os.path.join(src_path, _rtl_name, app, sol)).is_dir():
+                    rtl_file_path = os.path.join(src_path, _rtl_name, app, sol, 'rtl')
+                    rtl_files = os.listdir(rtl_file_path)
+                else:
+                    has_rtl = False
+                    print(f'ERROR: RTL path not found! Path guiven: {rtl_file_path}')
+
+                if has_rtl:
+                    for rtl in rtl_files:
+                        shutil.copy(os.path.join(rtl_file_path, rtl), os.path.join(dest_sol_path, 'rtl', rtl))
+                else:
+                    no_rtl.append(sol)
+            else:
+                print(f'INFO: mod solution {sol} skipped!')
+
+        print(f'Finished benchmark {app}!\n')
+        no_adb_dict[app] = no_adbs
+        no_rtl_dict[app] = no_rtl
+
+    print('Finished all benchmarks!')
+    for key in no_adb_dict.keys():
+        print(f'Missing adbs in {key}: {no_adb_dict[key]}')
+        print(f'Missing rtl in {key}: {no_rtl_dict[key]}')
+
+    print(f'\nResult is in path {dest_path}')
+    print('Exiting...')
+
+
+def gen_missing_adbs(_src, _dest):
+    cwd = os.getcwd()
+
+    gemm = ['solution166', 'solution66', 'solution67', 'solution68', 'solution69', 'solution71']
+    rtl_gemm = ['solution71']
+    sha = ['solution117', 'solution148', 'solution165', 'solution188', 'solution199', 'solution222', 'solution225', 'solution230', 'solution53', 'solution54', 'solution55', 'solution69', 'solution74', 'solution88', 'solution90']
+    stencil3d = ['solution156', 'solution214', 'solution241', 'solution40', 'solution41', 'solution42', 'solution43', 'solution44']
+    fft = ['solution107', 'solution133', 'solution144', 'solution146', 'solution150', 'solution153', 'solution159', 'solution162', 'solution167', 'solution169', 'solution177', 'solution182', 'solution183', 'solution184', 'solution187', 'solution196', 'solution200', 'solution201', 'solution218', 'solution226', 'solution229', 'solution230', 'solution232', 'solution236', 'solution238', 'solution249', 'solution253', 'solution255', 'solution256', 'solution263', 'solution276', 'solution277', 'solution323', 'solution75']
+        
+    missing_adbs = [gemm, sha, stencil3d, fft]
+
+    src_path = os.path.join(cwd, _src)
+    if not Path(src_path).is_dir():
+        print(f'ERROR: specified source dir {src_path} not found! Exiting...')
+        return -1
+
+    dest_path = os.path.join(cwd, _dest)
+    if not Path(dest_path).is_dir():
+        print(f'ERROR: specified destination dir {dest_path} not found! Exiting...')
+        return -1
+
+    for app in missing_adbs:
+        #setup
+        print(f'starting {app}...')
+
+        bench_name = DICT_LIST[app]['name']
+        current_dict = DICT_LIST[app]['dict']
+        current_top = DICT_LIST[app]['top']
+        current_files = DICT_LIST[app]['files']
+
+        run_dict_index = -1
+        main_func_index = -1
+        files_index = -1
+
+        lines = []
+        with open('script.tcl', 'r') as f:
+            i = 0
+            for l in lines:
+                if l.find('open_project') != -1:
+                    #print(f'open_project: {i}')
+                    run_dict_index = i
+                if l.find('set_top') != -1:
+                    #print(f'set_top: {i}')
+                    main_func_index = i
+                if l.find('add_files') != -1:
+                    #print(f'add_files: {i}')
+                    files_index = i
+                i=i+1
 
         
+
+        for sol in app:
+            solution_dict = []
+            directs = []
+            #extract directives
+            with open(os.path.join(cwd, _src, app, sol, f'{sol}_data.json'), 'r') as jf:
+                json_dict:dict = json.load(jf)
+                solution_dict = json_dict['HlsSolution']['DirectiveTcl']
+
+            for direct in solution_dict:
+                if direct.find('set_directive_pipeline') != -1:
+                    if direct.find('-off=true') != -1:
+                        subs = direct.split()
+                        direct = subs[0] + ' -off '+subs[1]
+                    directs.append(direct)
+
+                if direct.find('set_directive_array_partition') != -1:
+                    subs = direct.split()
+                    direct = subs[0]+' '+' '.join(subs[2:-1])+' '+subs[1]+' '+subs[-1]
+                    directs.append(direct)
+
+                if direct.find('set_directive_unroll') != -1:
+                    subs = direct.split()
+                    direct = subs[0]+' '+' '.join(subs[2:])+' '+subs[1]
+                    directs.append(direct)
+
+                if direct.find('set_directive_loop_flatten') != -1:
+                    
+                    directs.append(direct)
+
+                if direct.find('set_directive_loop_merge') != -1:
+                    directs.append(direct)
+
+            with open('directives.tcl', 'w') as tcl:
+                for d in directs:
+                    tcl.write(d)
+                    tcl.write('\n')
+
+            subprocess.run(f'vitis_hls -f {script_name}', shell=True)
+            print(f'finished run {sol}')
+
+    print('finished all runs!')
+            
+
 
 if __name__ == '__main__':
     src_dir = input('source directory: ')
     dest_dir = input('destination directory: ')
-    bench = input('benchmark name: ')
+    #bench = input('benchmark name: ')
+    adb_name = input('adb directory name: ')
+    rtl_name = input('rtl directory name: ')
 
-    extract_rtl_files(src_dir, dest_dir, bench)
+    #extract_rtl_files(src_dir, dest_dir, bench)
+    create_dataset_directory(src_dir, adb_name, rtl_name, dest_dir)
     #dir_tcl = input('tcl mod directory name: ')
     #dir_runs = input('run directory: ')
     #dir_report = input('report directory: ')
