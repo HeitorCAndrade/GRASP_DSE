@@ -714,11 +714,13 @@ class RandomSearch(Heuristic):
         )
 
         for container in ax.containers:
+            labels = [f"{w.get_height():.0f}%" if w.get_height() > 0 else "" for w in container]
             ax.bar_label(
                 container,
+                labels=labels,
                 fmt="%.0f%%",  
                 label_type="center",  
-                fontsize=12,   
+                fontsize=14,   
                 #fontweight="bold",
                 color="white" if container.patches[0].get_facecolor() != (0.827,0.827,0.827,1.0) else "black"  
             )
