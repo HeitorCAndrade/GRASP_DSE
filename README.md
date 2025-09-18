@@ -1,16 +1,43 @@
-# raise_dse
+# Multiple Loop Directive HLS Dataset
 
-Design Space Exploration
+This is the source code used for the generation of the MLDHLS dataset, which can be accessed here: http://www.inf.ufrgs.br/~glnazar/MLDHLS.tar.gz
+
+The dataset currently contains 10 benchmarks: SHA, GSM, AES, ADPCM, TRANS_FFT, GEMM, KNN , STENCIL3D, GRAMSCHMIDT, BACKPROP.
+
+Each benchmark contains several different design points based on the directives applied. For each design point you will find:
+
+	- Source C code.
+
+	- LLVM Intermediate Representation (IR).
+
+	- ADB files.
+
+	- Generated RTL files (Verilog).
+
+	- Post HLS and post implementation reports for timming, resource usage, power and number of clock cycles.
 
 # Usage
 
- 
 ```
-python main.py <heuristic> -c <c files of benchmark> -d <json of directives> -p <top function> -o <output file> -t <time limit for heuristic in seconds> -model <model of estimation chosen> 
+python main.py -b <benchmark name> -i <number of instances> -t <max run time for each instance in seconds>
 ```
-`heuristic`: it's currently possible to choose between 5 heuristics. `hill`, `greedy`, `GRASP`, `genetic`and `random`
-`model of estimation`: if the model of estimation with the name `<model of estimation chosen> ` don't exists, then the application train an estimator and create a model with the name specified.
+`benchmark name`: current benchmarks already included: SHA, GSM, AES, SPAM, DIGIT, OPTICAL, ADPCM, MOTION, TRANS_FFT, GEMM, KNN, VITERBI, STENCIL3D, GRAMSCHMIDT, BACKPROP - benchmark codes retrieved from CHStone, Machsuite, Polybench and Rosetta bechmarks.
+
+some other useful parameters include:
+
+`-bi`: Generates base instances first (counting towards the specified number of instances specified by `-i`).
+
+`-r`: Resumes run if a `stored_permutations.json` file is found (created automatically).
+
+`-v`: Verify which runs are valid for use, i.e. runs with successful implementation process.
+
 ## Modifying benchmark for usage
+In order to add a new benchmark, update the `benchmarks.json` file by adding the following:
+
+```
+"<benchmark_name>": {"cFiles":["path/to/file1", "path/to/file2", ... , "path/to/fileN"], "dFile":"<directive json file path>", "prjFile":"<top function name>"}
+```
+
 To apply directives to a C/C++ program we need to know where to apply these directives. That is what labels serves for. Here is an example:
 ```
 sha_transform ()
@@ -36,7 +63,9 @@ set_directive_pipeline "sha_transform/sha_transform_label1"
 set_directive_pipeline "sha_transform/sha_transform_label2"
 ```
 
-## Directives Json File
+### Directives Json File
+
+The directive Json file should contain the target directives as well as its setting variations
 
 This file has the following format:
 ```
@@ -50,7 +79,6 @@ This file has the following format:
 		<directive1>,<directive2>],
 		"function": <function in which directive is located>,
 		"label": <label in which directive is applied>,
-		"constraints":[<constraint1>,<constraint2>],
 		"directive_type":<directive_type>
 	},
 	...
@@ -81,21 +109,18 @@ Each dictionary inside `"directives"`is what I call a 'directive group', in othe
 		<directive1>,<directive2>],
 		"function": <function in which directive is located>,
 		"label": <label in which directive is applied>,
-		"constraints":[<constraint1>,<constraint2>],
 		"directive_type":<directive_type>
 	},
 ```
 In each directive group, the primary information is the `"possible_directives"`, it lists all the directives in the directive group, including the empty directive `""`.
- The `constraints`is a list of constraints of using any of the directives of this directive group, each constraint currently is a directive group, i.e `<directive_type> <label>`. Therefore, applying one of the `possible_directives`in the directive group would remove the directives groups specified in `constraints`.
+
  In a concrete example: 
  ```
 "pipeline flow_calc_label23": {
 	   "possible_directives":["","set_directive_pipeline \"flow_calc/flow_calc_label23\""],
 	   "function":"flow_calc",
 	   "label": "flow_calc_label23",
-	   "constraints":["unroll flow_calc_label23"],
 	   "directive_type":"pipeline"
 },
  ```
- This would mean that, if an heuristic choose any of the directives in the list: `
-["","set_directive_pipeline \"flow_calc/flow_calc_label23\""]`, the heuristic cannot choose, for the currently design/solution, any of the directives in the `unroll flow_calc_label123`directive group.
+
