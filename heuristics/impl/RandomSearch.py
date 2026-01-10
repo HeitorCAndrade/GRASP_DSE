@@ -214,7 +214,7 @@ class RandomSearch(Heuristic):
             
                     
 
-    def paretto_frontier(self, bench, _dir = 'DATASETS', y_axis='energy'):
+    def paretto_frontier(self, bench, _dir = 'DATASETS', y_axis='energy', show_graph = True):
         cwd = os.getcwd()
         is_filtered = False
         bench_name = bench
@@ -350,7 +350,8 @@ class RandomSearch(Heuristic):
                             #     print('----------------------------------------------------------------------------------')
                             #print(f'dsp found: {sol_dsp}')
 
-                    sol_area = sol_lut/MAX_LUT + sol_ff/MAX_FF + sol_bram/MAX_BRAM + sol_dsp/MAX_DSP
+                    #sol_area = sol_lut/MAX_LUT + sol_ff/MAX_FF + sol_bram/MAX_BRAM + sol_dsp/MAX_DSP #Back here
+                    sol_area = sol_lut/MAX_LUT + sol_ff/MAX_FF
                     if sol_area > max_snru:
                         max_snru = sol_area
 
@@ -488,6 +489,7 @@ class RandomSearch(Heuristic):
         if y_axis == 'energy':
             np_y_paretto = np_energy
         if y_axis == 'area':
+            y_axis = 'area_lut_ff'
             np_y_paretto = np_area
         if y_axis == 'power':
             np_y_paretto = np_power
@@ -520,7 +522,7 @@ class RandomSearch(Heuristic):
         print(f'length of time: {len(p_frontX)}')
         print(f'length of {y_axis}: {len(p_frontY)}')
 
-        with open(f'paretto_{y_axis}.txt', 'w') as fe:
+        with open(f'{bench_name}_paretto_{y_axis}.txt', 'w') as fe:
             for line in p_front_sols:
                 fe.write(f'{line}\n')
 
@@ -572,23 +574,133 @@ class RandomSearch(Heuristic):
             else:
                 print('unknown condition!')
                 
-        sns.set_theme()
-        #df = pd.Dataframe()
-        #sns.color_palette("Spectral", as_cmap=True)
-        #sns.scatterplot(x=x_points, y=y_points, hue=p_color, s=18, palette=['blue', 'red', 'seagreen'])
-        #plt.scatter(x_points, y_points, c=p_color)
-        #if y_axis == 'energy':
-            #plt.title(f'{bench_name} energy-time paretto frontier')
-            #plt.ylabel('energy (nJ)')
-       # if y_axis == 'power':
-           # plt.title(f'{bench_name} power-time paretto frontier')
-            #plt.ylabel('power (W)')
-        #if y_axis == 'area':
-            #plt.title(f'{bench_name} area-time paretto frontier')
-            #plt.ylabel('area (snru)')
-       # plt.xlabel('time (ns)')
-       # plt.savefig(f'{bench_name}_{y_axis}_time.pdf')
-        #plt.show()
+        # sns.set_theme()
+        # #df = pd.Dataframe()
+        # sns.color_palette("Spectral", as_cmap=True)
+        # sns.scatterplot(x=x_points, y=y_points, hue=p_color, s=18, palette=['blue', 'red', 'seagreen'])
+        # #plt.scatter(x_points, y_points, c=p_color)
+        # if y_axis == 'energy':
+        #     plt.title(f'{bench_name} energy-time paretto frontier')
+        #     plt.ylabel('energy (nJ)')
+        # if y_axis == 'power':
+        #     plt.title(f'{bench_name} power-time paretto frontier')
+        #     plt.ylabel('power (W)')
+        # if y_axis == 'area':
+        #     plt.title(f'{bench_name} area-time paretto frontier')
+        #     plt.ylabel('area (snru)')
+        # plt.xlabel('time (ns)')
+        # plt.savefig(f'{bench_name}_{y_axis}_time.pdf')
+        # plt.show()
+
+        sns.set_theme(style="whitegrid", context="talk")
+
+        # Create scatterplot
+        plt.figure(figsize=(6, 6))
+        #palette = ['#1f77b4', '#d62728', '#2ca02c']  # Better color harmony
+
+        df = pd.DataFrame({
+            'x': x_points,
+            'y': y_points,
+            'category': p_color
+        })
+
+        # Sort so that 'A' is last (drawn on top)
+        df['category'] = pd.Categorical(df['category'], categories=['', 'paretto frontier', 'loop directive removed'], ordered=True)
+
+        categories = ['', 'paretto frontier', 'loop directive removed']
+
+        palette = {
+            '':                         '#1f77b4',   # blue
+            'paretto frontier':         '#d62728',   # red
+            'loop directive removed':   '#2ca02c'    # green
+        }
+
+        markers = ['o', 'X', 's']
+
+        ax = sns.scatterplot(
+            x=x_points,
+            y=y_points,
+            hue=p_color,
+            markers=markers,
+            style=p_color,
+            s=60,                     # larger marker size for clarity
+            alpha=0.8,                # slight transparency for overlap
+            edgecolor='black',        # subtle outline for contrast
+            linewidth=0.4,
+            palette=palette,
+            hue_order=categories,
+            style_order=categories,
+            legend=False,
+            zorder=2
+        )
+
+        # for legend_obj in ax.get_children():
+        #     if isinstance(legend_obj, plt.legend):
+        #         legend_obj.remove()
+
+        # Dynamic title and labels
+        titles = {
+            'energy': 'Energy–Time Pareto Frontier',
+            'power': 'Power–Time Pareto Frontier',
+            'area': 'Area–Time Pareto Frontier'
+        }
+        ylabels = {
+            'energy': 'Energy (nJ)',
+            'power': 'Power (W)',
+            'area': 'Area (snru)'
+        }
+
+        ax.set_title(f"{bench_name} {titles.get(y_axis, '')}", fontsize=16, pad=12)
+        ax.set_xlabel("Time (ns)", fontsize=13)
+        ax.set_ylabel(ylabels.get(y_axis, ''), fontsize=13)
+
+        # Legend and layout tweaks
+        #ax.legend(title=p_color.name if hasattr(p_color, "name") else "Category", loc='best', frameon=True)
+        sns.despine(trim=False)
+        plt.tight_layout()
+
+        # Save and show
+        plt.savefig(f"{bench_name}_{y_axis}_time.pdf", bbox_inches='tight', dpi=300)
+        if show_graph:
+            plt.show()
+
+        ax.legend(title=p_color.name if hasattr(p_color, "name") else "Category", loc='best', frameon=True)
+
+        fig_legend, ax_legend = plt.subplots(figsize=(3, 2))
+
+        sns.scatterplot(
+            x=x_points,
+            y=y_points,
+            hue=p_color,
+            style=p_color,
+            #markers=markers,
+            palette=palette,
+            s=60,
+            alpha=0.9,
+            edgecolor='black',
+            linewidth=0.4,
+            ax=ax_legend
+        )
+
+        # Extract legend handles and labels
+        handles, labels = ax_legend.get_legend_handles_labels()
+        fig_legend.clear()
+
+        # Create standalone legend
+        fig_legend.legend(
+            handles,
+            labels,
+            title="Category",
+            loc='center',
+            frameon=True,
+            ncol=1,
+            fontsize=12,
+            title_fontsize=13
+        )
+
+        plt.axis('off')
+        fig_legend.savefig(f"{bench_name}_{y_axis}_legend.pdf", bbox_inches='tight', dpi=300)
+        plt.close(fig_legend)
 
         
 
